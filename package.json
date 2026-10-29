@@ -6,9 +6,34 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prepare": "husky",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix --max-warnings=0",
+    "check": "npm run format:check && npm run lint && npm run build",
+    "verify:ui": "npm run build && node scripts/verify-ui.mjs",
+    "verify:hooks": "node scripts/verify-hooks.mjs"
+  },
+  "lint-staged": {
+    "*.{js,mjs,cjs}": [
+      "prettier --write",
+      "eslint --max-warnings=0"
+    ],
+    "*.{html,css,json,md,yml,yaml,svg}": "prettier --write"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "chrome-launcher": "^1.2.2",
+    "eslint": "^10.13.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.13.0",
+    "husky": "^9.1.7",
+    "lighthouse": "^13.6.0",
+    "lint-staged": "^17.6.0",
+    "playwright": "^1.64.1",
+    "prettier": "^3.9.10",
     "vite": "^8.3.5"
   }
 }
