@@ -4,10 +4,166 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>shopboard</title>
+    <meta name="description" content="ShopBoard - Sell smarter with modern e-commerce tools." />
+    <title>ShopBoard — Sell smarter.</title>
   </head>
   <body>
-    <div id="app"></div>
+    <header class="site-header">
+      <div class="header-container">
+        <a href="#" class="logo">ShopBoard</a>
+        <nav aria-label="Main Navigation">
+          <ul class="nav-links">
+            <li><a href="#products">Shop</a></li>
+            <li><a href="#register">Sign up</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- Hero Section -->
+      <section id="hero" class="hero">
+        <div class="hero-content">
+          <h1>Sell smarter.</h1>
+          <p class="hero-subtitle">
+            All-in-one storefront analytics, customer insights, and automated order fulfillment.
+          </p>
+          <a href="#products" class="btn btn-primary">Shop now</a>
+        </div>
+        <div class="hero-media">
+          <img
+            src="/hero.png"
+            alt="ShopBoard analytics dashboard overview"
+            width="340"
+            height="358"
+            fetchpriority="high"
+          />
+        </div>
+      </section>
+
+      <!-- Products Section -->
+      <section id="products" class="products">
+        <div class="section-heading">
+          <h2>Featured Products</h2>
+          <p>Discover our top-rated business toolkits and equipment.</p>
+        </div>
+        <div class="product-grid">
+          <!-- Article 1 -->
+          <article class="product-card">
+            <div class="product-badge">Best Seller</div>
+            <h3>Inventory Scanner Pro</h3>
+            <p class="price">$149.00</p>
+            <p class="description">Wireless high-speed barcode reader with instant cloud sync.</p>
+            <button type="button" class="btn btn-outline">Add to cart</button>
+          </article>
+
+          <!-- Article 2 -->
+          <article class="product-card">
+            <div class="product-badge">New</div>
+            <h3>Thermal Label Printer</h3>
+            <p class="price">$199.00</p>
+            <p class="description">Inkless shipping label printer compatible with all carriers.</p>
+            <button type="button" class="btn btn-outline">Add to cart</button>
+          </article>
+
+          <!-- Article 3 -->
+          <article class="product-card">
+            <div class="product-badge">Popular</div>
+            <h3>POS Terminal Stand</h3>
+            <p class="price">$79.00</p>
+            <p class="description">Ergonomic 360-degree rotating stand for retail checkouts.</p>
+            <button type="button" class="btn btn-outline">Add to cart</button>
+          </article>
+
+          <!-- Article 4 -->
+          <article class="product-card">
+            <h3>NFC Payment Pad</h3>
+            <p class="price">$119.00</p>
+            <p class="description">Contactless tap-to-pay reader with end-to-end encryption.</p>
+            <button type="button" class="btn btn-outline">Add to cart</button>
+          </article>
+
+          <!-- Article 5 -->
+          <article class="product-card">
+            <h3>Digital Scale Hub</h3>
+            <p class="price">$89.00</p>
+            <p class="description">Precision weight scale for accurate shipping calculations.</p>
+            <button type="button" class="btn btn-outline">Add to cart</button>
+          </article>
+
+          <!-- Article 6 -->
+          <article class="product-card">
+            <div class="product-badge">Bundle</div>
+            <h3>Retail Starter Pack</h3>
+            <p class="price">$499.00</p>
+            <p class="description">Complete checkout kit including printer, scanner, and dock.</p>
+            <button type="button" class="btn btn-outline">Add to cart</button>
+          </article>
+        </div>
+      </section>
+
+      <!-- Register Section -->
+      <section id="register" class="register">
+        <div class="form-container">
+          <h2>Create your account</h2>
+          <p class="form-intro">Start your 14-day free trial. No credit card required.</p>
+
+          <form class="register-form" method="post" action="#">
+            <div class="form-group">
+              <label for="fullname">Full name</label>
+              <input
+                type="text"
+                id="fullname"
+                name="fullname"
+                required
+                minlength="2"
+                autocomplete="name"
+                placeholder="Alex Morgan"
+              />
+              <span class="field-hint">Minimum 2 characters</span>
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email address</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                autocomplete="email"
+                inputmode="email"
+                placeholder="alex@example.com"
+              />
+              <span class="field-hint">Must be a valid email address</span>
+            </div>
+
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                required
+                minlength="8"
+                autocomplete="new-password"
+                placeholder="At least 8 characters"
+              />
+              <span class="field-hint">Minimum 8 characters</span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Sign up</button>
+            <p class="form-success" role="status" hidden>Account created successfully! Check your email to verify.</p>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-container">
+        <p>&copy; 2026 ShopBoard. All rights reserved.</p>
+      </div>
+    </footer>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
