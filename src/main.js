@@ -1,109 +1,33 @@
 import './style.css';
+import {
+  products,
+  categories,
+  catalogState,
+  categoryCounts,
+  getFilteredProducts,
+  initConsoleApi,
+  resetCatalog,
+  setCategory,
+  setQuery,
+  setSort,
+} from './catalog.js';
+import { createCartStore } from './cart/cart-store.js';
+import { createCartDialog } from './cart/cart-dialog.js';
+import { header, footer } from './layout/site-layout.js';
+import { icon, photo, money } from './shared/presentation.js';
+import { createInfoDialog } from './dialogs/info-dialog.js';
 
-const paths = {
-  search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/>',
-  user: '<circle cx="12" cy="7" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/>',
-  cart: '<path d="M2 3h3l3 13h11l3-9H6"/><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>',
-  arrow: '<path d="M4 12h16m-6-6 6 6-6 6"/>',
-  leaf: '<path d="M20 3C9 2 2 9 5 16c7 4 15-2 15-13Z"/><path d="M3 22 16 8"/>',
-  truck:
-    '<path d="M2 5h12v13H2zM14 10h5l3 5v3h-8"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="19" r="2"/>',
-  shield: '<path d="m12 2 9 4v7c0 5-9 9-9 9S3 18 3 13V6z"/><path d="m8 12 3 3 5-6"/>',
-  box: '<path d="m12 2 10 5v11l-10 5-10-5V7zM2 7l10 5 10-5M12 12v11M7 4l10 5v6"/>',
-  close: '<path d="m6 6 12 12M6 18 18 6"/>',
-  eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
-};
-const icon = (name) =>
-  `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.arrow}</svg>`;
-
-// Clip a shared, eagerly loaded image into the supplied photographic regions.
-// Native image elements keep the decoded bitmap available across view changes.
-const photo = (x, y, w, h) =>
-  `<span class="photo" aria-hidden="true" style="--photo-width:${(1672 / w) * 100}%;--photo-height:${(941 / h) * 100}%;--photo-left:${(-x / w) * 100}%;--photo-top:${(-y / h) * 100}%"><img src="/shopboard-homepage-concept.png" alt="" width="1672" height="941" loading="eager" decoding="sync" draggable="false"/></span>`;
-const products = [
-  { id: 'mug', name: 'Stoneware Mug', price: 18, category: 'home', image: [126, 549, 221, 121] },
-  {
-    id: 'planter',
-    name: 'Ceramic Planter',
-    price: 24,
-    category: 'home',
-    image: [368, 549, 220, 121],
-  },
-  {
-    id: 'blanket',
-    name: 'Linen Throw Blanket',
-    price: 56,
-    category: 'lifestyle',
-    image: [607, 549, 219, 121],
-  },
-  {
-    id: 'bottle',
-    name: 'Everyday Water Bottle',
-    price: 32,
-    category: 'lifestyle',
-    image: [847, 549, 218, 121],
-  },
-  {
-    id: 'journal',
-    name: 'Notebook Journal',
-    price: 20,
-    category: 'workspace',
-    image: [1086, 549, 217, 121],
-  },
-  {
-    id: 'tray',
-    name: 'Oak Catchall Tray',
-    price: 34,
-    category: 'gifts',
-    image: [1326, 549, 219, 121],
-  },
-];
-const categories = [
-  { id: 'home', name: 'Home', image: [128, 390, 337, 98] },
-  { id: 'lifestyle', name: 'Lifestyle', image: [489, 390, 336, 98] },
-  { id: 'workspace', name: 'Workspace', image: [849, 390, 336, 98] },
-  { id: 'gifts', name: 'Gifts', image: [1208, 390, 336, 98] },
-];
-const money = (value) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
-let cart = {};
-try {
-  const saved = JSON.parse(localStorage.getItem('shopboard-cart') || '{}');
-  for (const product of products)
-    if (Number.isInteger(saved?.[product.id]) && saved[product.id] > 0 && saved[product.id] <= 99)
-      cart[product.id] = saved[product.id];
-} catch {
-  /* Shopping still works when storage is unavailable. */
-}
-let activeCategory = '';
-let query = '';
+const cart = createCartStore(products);
 let toastTimer;
 const app = document.querySelector('#app');
 const cartDialog = document.querySelector('#cart-dialog');
 const infoDialog = document.querySelector('#info-dialog');
-
-function header(auth = false) {
-  return `<div class="announcement">${icon('leaf')}<span>Thoughtfully chosen for a better everyday.<span class="announcement-extra"> &nbsp; A little less ordinary.</span></span></div>
-    <header class="site-header"><div class="container header-inner">
-      <a class="logo" href="#home" aria-label="ShopBoard home">ShopBoard<span class="logo-dot">.</span></a>
-      ${
-        auth
-          ? '<a class="back-to-shop" href="#home">Back to the shop <span aria-hidden="true">↗</span></a>'
-          : `<form class="search-form" role="search"><label class="visually-hidden" for="product-search">Search products</label>${icon('search')}<input id="product-search" name="q" type="search" placeholder="Search for something good…" autocomplete="off"/><button class="visually-hidden" type="submit">Search</button></form>
-      <nav class="main-nav" aria-label="Main navigation"><a href="#home" data-nav="home">Home</a><a href="#category/lifestyle" data-nav="lifestyle">Lifestyle</a><a href="#category/workspace" data-nav="workspace">Workspace</a><a href="#category/gifts" data-nav="gifts">Gifts</a></nav>
-      <div class="header-actions"><a class="icon-button account-link" href="#login" aria-label="Log in or create an account">${icon('user')}</a><button class="icon-button cart-toggle" type="button" aria-label="Open shopping bag, ${cartCount()} items">${icon('cart')}<span class="cart-count">${cartCount()}</span></button></div>`
-      }
-    </div></header>`;
-}
-
-function footer(auth = false) {
-  return `<footer class="site-footer"><div class="container footer-inner"><div><a class="logo footer-logo" href="#home">ShopBoard<span class="logo-dot">.</span></a><p class="copyright">© ${new Date().getFullYear()} ShopBoard. A considered everyday.</p></div>
-    <nav aria-label="Footer navigation">${(auth ? ['About', 'Contact', 'Privacy'] : ['About', 'Contact', 'Shipping', 'Returns', 'FAQs']).map((label) => `<button type="button" class="text-button" data-info="${label}">${label}</button>`).join('')}</nav><span class="footer-note">A little more thoughtful. ${icon('leaf')}</span></div></footer>`;
-}
+const cartView = createCartDialog(cartDialog, cart, syncCartBadge);
+const infoView = createInfoDialog(infoDialog);
 
 function storefront() {
-  app.innerHTML = `${header()}<main id="main-content" tabindex="-1">
-    <section class="hero" aria-labelledby="hero-title"><div class="hero-art">${photo(665, 98, 1007, 271)}</div><div class="container hero-inner"><div class="hero-copy"><p class="eyebrow">THE EVERYDAY, WELL CHOSEN</p><h1 id="hero-title">Find something<br/>worth keeping.</h1><p class="hero-subtitle">Curated goods for everyday living.</p><a class="button button-primary" href="#shop">Shop the collection ${icon('arrow')}</a><span class="hero-footnote">Made for your space. Chosen for your life.</span></div></div></section>
+  app.innerHTML = `${header(cart.getSnapshot().count)}<main id="main-content" tabindex="-1">
+    <section class="hero" aria-labelledby="hero-title"><div class="hero-art">${photo(665, 98, 1007, 271, true)}</div><div class="container hero-inner"><div class="hero-copy"><p class="eyebrow">THE EVERYDAY, WELL CHOSEN</p><h1 id="hero-title">Find something<br/>worth keeping.</h1><p class="hero-subtitle">Curated goods for everyday living.</p><a class="button button-primary" href="#products">Shop the collection ${icon('arrow')}</a><span class="hero-footnote">Made for your space. Chosen for your life.</span></div></div></section>
     <div class="container shop-content"><nav class="category-grid" aria-label="Shop by category">${categories.map((category) => `<a href="#category/${category.id}" class="category-card" data-category="${category.id}">${photo(...category.image)}<span class="category-name">${category.name} <span aria-hidden="true">→</span></span></a>`).join('')}</nav>
     <section id="products" class="products" aria-labelledby="products-title"><div class="section-heading"><div><p class="eyebrow">GOOD FINDS, JUST IN</p><h2 id="products-title">New arrivals</h2></div><button class="view-all text-button" type="button">View all ${icon('arrow')}</button></div><div class="filter-summary" hidden><span id="results-description" role="status"></span><button class="text-button clear-filters" type="button">Clear filters ×</button></div><div class="product-grid"></div></section>
     <section class="benefits" aria-label="The ShopBoard approach">${[
@@ -124,9 +48,9 @@ function storefront() {
     event.preventDefault();
     document.querySelector('#products').scrollIntoView({ behavior: 'smooth' });
   });
-  app.querySelector('#product-search').value = query;
-  app.querySelector('#product-search').addEventListener('input', (event) => {
-    query = event.target.value;
+  app.querySelector('#global-product-search').value = catalogState.query;
+  app.querySelector('#global-product-search').addEventListener('input', (event) => {
+    setQuery(event.target.value);
     renderProducts();
   });
   app.querySelector('.view-all').addEventListener('click', clearFilters);
@@ -137,18 +61,13 @@ function storefront() {
       'Thanks for your interest! Newsletter subscriptions are coming soon.';
   });
   app.querySelector('.cart-toggle').addEventListener('click', () => {
-    renderCart();
-    cartDialog.showModal();
+    cartView.open();
   });
-  bindInfo();
+  infoView.bind(app);
 }
 
 function renderProducts() {
-  const matching = products.filter(
-    (product) =>
-      (!activeCategory || product.category === activeCategory) &&
-      product.name.toLowerCase().includes(query.trim().toLowerCase()),
-  );
+  const matching = getFilteredProducts();
   const grid = app.querySelector('.product-grid');
   // Create cards once. Filtering should hide cards, not destroy loaded images.
   if (!grid.children.length) {
@@ -172,35 +91,125 @@ function renderProducts() {
     card.hidden = !matchingIds.has(card.dataset.productCard);
   });
   grid.querySelector('.empty-results').hidden = matching.length > 0;
-  app.querySelector('#products-title').textContent = activeCategory
-    ? `${categories.find((category) => category.id === activeCategory).name} essentials`
+  app.querySelector('#products-title').textContent = catalogState.category
+    ? `${categories.find((category) => category.id === catalogState.category).name} essentials`
     : 'New arrivals';
-  app.querySelector('.filter-summary').hidden = !activeCategory && !query;
+  app.querySelector('.filter-summary').hidden = !catalogState.category && !catalogState.query;
   app.querySelector('#results-description').textContent =
-    `${matching.length} ${matching.length === 1 ? 'find' : 'finds'}${query ? ` for “${query}”` : ''}`;
+    `${matching.length} ${matching.length === 1 ? 'find' : 'finds'}${catalogState.query ? ` for “${catalogState.query}”` : ''}`;
   app.querySelectorAll('[data-category]').forEach((link) => {
-    if (link.dataset.category === activeCategory) link.setAttribute('aria-current', 'true');
+    if (link.dataset.category === catalogState.category) link.setAttribute('aria-current', 'true');
     else link.removeAttribute('aria-current');
   });
   app.querySelectorAll('[data-nav]').forEach((link) => {
-    if (link.dataset.nav === (activeCategory || 'home')) link.setAttribute('aria-current', 'page');
+    if (link.dataset.nav === (catalogState.category || 'home'))
+      link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
   });
 }
 
 function clearFilters() {
-  activeCategory = '';
-  query = '';
-  if (location.hash !== '#shop') location.hash = 'shop';
+  resetCatalog();
+  if (location.hash !== '#home') location.hash = 'home';
   else {
-    app.querySelector('#product-search').value = '';
+    app.querySelector('#global-product-search').value = '';
     renderProducts();
   }
 }
 
+function productCard(product) {
+  return `<article class="product-card" data-product-card="${product.id}"><div class="product-image" role="img" aria-label="${product.name}">${photo(...product.image)}</div><div class="product-details"><div><h2>${product.name}</h2><p class="price">${money(product.price)}</p></div><button class="add-to-cart" type="button" data-product="${product.id}" aria-label="Add ${product.name} to bag">${icon('cart')}</button></div></article>`;
+}
+
+function sortValue() {
+  return catalogState.sortBy === 'default'
+    ? 'default'
+    : `${catalogState.sortBy}-${catalogState.sortOrder}`;
+}
+
+function productsPage() {
+  const counts = categoryCounts();
+  app.innerHTML = `${header(cart.getSnapshot().count)}<main id="main-content" class="products-page" tabindex="-1"><div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="#home">Home</a><span aria-hidden="true">/</span><span>Products</span></nav>
+    <header class="products-page-header"><p class="eyebrow">THE FULL COLLECTION</p><h1 id="products-page-title">Shop the Collection</h1><p>Useful, lasting goods chosen for everyday life.</p><p id="products-count" class="products-count" role="status"></p></header>
+    <section class="catalog-toolbar" aria-label="Product filters">
+      <div class="category-pills" aria-label="Filter by category"><a class="category-pill" data-catalog-category="" href="#products">All (${counts.all})</a>${categories.map((category) => `<a class="category-pill" data-catalog-category="${category.id}" href="#category/${category.id}">${category.name} (${counts[category.id]})</a>`).join('')}</div>
+      <div class="catalog-controls"><div class="sort-group"><label for="product-sort">Sort by</label><select id="product-sort" class="sort-select"><option value="default">Featured / Default</option><option value="price-asc">Price: Low to High</option><option value="price-desc">Price: High to Low</option><option value="name-asc">Name: A to Z</option><option value="name-desc">Name: Z to A</option></select></div>
+      <div class="catalog-search"><label class="visually-hidden" for="product-search">Search products</label>${icon('search')}<input id="product-search" type="search" placeholder="Search the collection…" autocomplete="off"/></div></div>
+      <div class="active-filters" hidden><span class="active-filter-copy"></span><button class="text-button clear-catalog-filters" type="button">Clear filters ×</button></div>
+    </section>
+    <section aria-labelledby="products-page-title"><div class="product-grid catalog-product-grid"></div></section>
+  </div></main>${footer()}`;
+  app.querySelector('#product-search').addEventListener('input', (event) => {
+    setQuery(event.target.value);
+    renderCatalogPage();
+  });
+  app.querySelector('#product-sort').addEventListener('change', (event) => {
+    const [by, order] = event.target.value.split('-');
+    setSort(by, order);
+    renderCatalogPage();
+  });
+  app.querySelector('.clear-catalog-filters').addEventListener('click', () => {
+    resetCatalog();
+    history.replaceState(null, '', '#products');
+    renderCatalogPage();
+  });
+  bindShopChrome();
+  infoView.bind(app);
+  renderCatalogPage();
+}
+
+function renderCatalogPage() {
+  if (!app.querySelector('.catalog-product-grid')) return;
+  const matching = getFilteredProducts();
+  const grid = app.querySelector('.catalog-product-grid');
+  grid.innerHTML = matching.length
+    ? matching.map(productCard).join('')
+    : `<div class="empty-results">${icon('search')}<h2>No finds just yet.</h2><p>Try another search or explore the full collection.</p><button class="button button-green clear-empty" type="button">Explore all products</button></div>`;
+  grid
+    .querySelectorAll('[data-product]')
+    .forEach((button) => button.addEventListener('click', () => addToCart(button.dataset.product)));
+  grid.querySelector('.clear-empty')?.addEventListener('click', () => {
+    resetCatalog();
+    history.replaceState(null, '', '#products');
+    renderCatalogPage();
+  });
+  app.querySelector('#product-search').value = catalogState.query;
+  app.querySelector('#product-sort').value = sortValue();
+  app.querySelector('#products-count').textContent =
+    `Showing ${matching.length} ${matching.length === 1 ? 'find' : 'finds'}`;
+  const filters = [];
+  if (catalogState.category)
+    filters.push(`Category: ${categories.find((item) => item.id === catalogState.category)?.name}`);
+  if (catalogState.query) filters.push(`Search: “${catalogState.query}”`);
+  if (catalogState.minPrice !== null) filters.push(`From ${money(catalogState.minPrice)}`);
+  if (catalogState.maxPrice !== null) filters.push(`Up to ${money(catalogState.maxPrice)}`);
+  const summary = app.querySelector('.active-filters');
+  summary.hidden = filters.length === 0;
+  app.querySelector('.active-filter-copy').textContent = filters.join(' · ');
+  app.querySelectorAll('[data-catalog-category]').forEach((link) => {
+    const active = link.dataset.catalogCategory === catalogState.category;
+    link.classList.toggle('is-active', active);
+    if (active) link.setAttribute('aria-current', 'true');
+    else link.removeAttribute('aria-current');
+  });
+}
+
+function bindShopChrome() {
+  app.querySelector('.search-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    setQuery(app.querySelector('#global-product-search').value);
+    if (location.hash === '#products') renderCatalogPage();
+    else location.hash = 'products';
+  });
+  app.querySelector('.cart-toggle').addEventListener('click', () => {
+    cartView.open();
+  });
+}
+
 function authPage(mode) {
   const signup = mode === 'signup';
-  app.innerHTML = `${header(true)}<main id="main-content" class="auth-main" tabindex="-1"><section class="auth-layout" aria-labelledby="auth-title">
+  app.innerHTML = `${header(0, true)}<main id="main-content" class="auth-main" tabindex="-1"><section class="auth-layout" aria-labelledby="auth-title">
     <aside class="auth-story"><div class="auth-story-image">${photo(950, 98, 722, 271)}</div><div class="auth-story-copy"><p class="eyebrow">A LITTLE MORE THOUGHTFUL</p><h2>Good things.<br/>Everyday moments.</h2><p>A home that feels like you. A workspace that inspires you. Find the little things that make a difference.</p><span class="auth-story-signature">Thoughtfully yours, <span>ShopBoard.</span></span></div></aside>
     <div class="auth-panel"><div class="auth-form-wrap"><a href="#home" class="auth-back">← Back to the collection</a><p class="eyebrow">${signup ? 'MAKE YOURSELF AT HOME' : 'YOUR EVERYDAY, REVISITED'}</p><h1 id="auth-title">${signup ? 'A good place to begin.' : 'Welcome back.'}</h1><p class="auth-intro">${signup ? 'Create an account for a more considered everyday.' : 'A few favorite things are waiting for you.'}</p>
     <nav class="auth-tabs" aria-label="Account access"><a href="#login" ${!signup ? 'aria-current="page"' : ''}>Log in</a><a href="#signup" ${signup ? 'aria-current="page"' : ''}>Sign up</a></nav>
@@ -234,27 +243,20 @@ function authPage(mode) {
     status.hidden = false;
     status.textContent = `${signup ? 'Your signup form is ready.' : 'Your login form is ready.'} Account ${signup ? 'creation' : 'sign-in'} will be available when the authentication service is connected. No details have been sent or saved.`;
   });
-  bindInfo();
+  infoView.bind(app);
 }
 
-function cartCount() {
-  return Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
-}
-function saveCart() {
-  try {
-    localStorage.setItem('shopboard-cart', JSON.stringify(cart));
-  } catch {
-    /* Keep the current session usable. */
-  }
+function syncCartBadge() {
+  const { count } = cart.getSnapshot();
   const badge = app.querySelector('.cart-count');
-  if (badge) badge.textContent = cartCount();
+  if (badge) badge.textContent = count;
   app
     .querySelector('.cart-toggle')
-    ?.setAttribute('aria-label', `Open shopping bag, ${cartCount()} items`);
+    ?.setAttribute('aria-label', `Open shopping bag, ${count} items`);
 }
 function addToCart(id) {
-  cart[id] = Math.min(99, (cart[id] || 0) + 1);
-  saveCart();
+  cart.add(id);
+  syncCartBadge();
   showToast(`${products.find((product) => product.id === id).name} added to your bag`);
 }
 function showToast(message) {
@@ -263,61 +265,6 @@ function showToast(message) {
   toast.textContent = message;
   toast.classList.add('is-visible');
   toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 3000);
-}
-function renderCart() {
-  const items = products.filter((product) => cart[product.id]);
-  cartDialog.innerHTML = `<div class="dialog-heading"><div><p class="eyebrow">YOUR GOOD FINDS</p><h2 id="cart-title">Your shopping bag <span>(${cartCount()})</span></h2></div><button class="icon-button close-dialog" type="button" aria-label="Close shopping bag">${icon('close')}</button></div>
-    ${items.length ? `<div class="cart-items">${items.map((product) => `<article class="cart-item"><div class="cart-image">${photo(...product.image)}</div><div class="cart-item-info"><h3>${product.name}</h3><p>${money(product.price)}</p><div class="quantity-controls"><button type="button" data-quantity="${product.id}" data-delta="-1" aria-label="Decrease ${product.name} quantity">−</button><span aria-label="Quantity">${cart[product.id]}</span><button type="button" data-quantity="${product.id}" data-delta="1" aria-label="Increase ${product.name} quantity" ${cart[product.id] >= 99 ? 'disabled' : ''}>+</button></div></div><button type="button" class="text-button remove-item" data-remove="${product.id}" aria-label="Remove ${product.name}">${icon('close')}</button></article>`).join('')}</div><div class="cart-total"><span>Subtotal</span><strong>${money(items.reduce((sum, product) => sum + product.price * cart[product.id], 0))}</strong></div><p class="cart-note">This is a preview shop. Checkout and payment are not available yet.</p>` : `<div class="empty-bag">${icon('cart')}<h3>A little room for good things.</h3><p>Your bag is empty. Find something worth keeping.</p></div>`}
-    <button type="button" class="button button-green continue-shopping">Continue exploring ${icon('arrow')}</button>`;
-  cartDialog.querySelector('.close-dialog').addEventListener('click', () => cartDialog.close());
-  cartDialog
-    .querySelector('.continue-shopping')
-    .addEventListener('click', () => cartDialog.close());
-  cartDialog.querySelectorAll('[data-quantity]').forEach((button) =>
-    button.addEventListener('click', () => {
-      const id = button.dataset.quantity;
-      cart[id] += Number(button.dataset.delta);
-      if (cart[id] <= 0) delete cart[id];
-      saveCart();
-      renderCart();
-      (
-        cartDialog.querySelector(`[data-quantity="${id}"][data-delta="${button.dataset.delta}"]`) ||
-        cartDialog.querySelector('.close-dialog')
-      ).focus();
-    }),
-  );
-  cartDialog.querySelectorAll('[data-remove]').forEach((button) =>
-    button.addEventListener('click', () => {
-      delete cart[button.dataset.remove];
-      saveCart();
-      renderCart();
-      cartDialog.querySelector('.close-dialog').focus();
-    }),
-  );
-}
-const information = {
-  About:
-    'ShopBoard is a concept store for thoughtfully chosen goods for your home, workspace, and everyday life. This storefront is a design preview; products and prices are illustrative.',
-  Contact:
-    'Our customer support service is coming soon. This preview does not accept orders or support requests.',
-  Shipping:
-    'Shipping destinations, rates, and delivery estimates will be available when the shop launches. Orders are not available in this preview.',
-  Returns:
-    'Return details will be published before the shop opens. No purchases can be made in this preview.',
-  FAQs: 'You can explore categories, search the collection, and try the shopping bag. Account registration, newsletter subscriptions, and checkout are not connected yet.',
-  Privacy:
-    'Account and newsletter forms do not send or save your details in this preview. Your shopping bag is saved only in this browser so you can return to it.',
-  'Password reset':
-    'Password recovery will be available when account access launches. No email has been sent.',
-};
-function bindInfo() {
-  app.querySelectorAll('[data-info]').forEach((button) =>
-    button.addEventListener('click', () => {
-      infoDialog.innerHTML = `<div class="dialog-heading"><h2 id="info-title">${button.dataset.info}</h2><button class="icon-button" type="button" aria-label="Close">${icon('close')}</button></div><p class="info-copy">${information[button.dataset.info]}</p>`;
-      infoDialog.querySelector('button').addEventListener('click', () => infoDialog.close());
-      infoDialog.showModal();
-    }),
-  );
 }
 for (const dialog of [cartDialog, infoDialog])
   dialog.addEventListener('click', (event) => {
@@ -334,31 +281,43 @@ for (const dialog of [cartDialog, infoDialog])
 function route() {
   const hash = location.hash.slice(1);
   const auth = hash === 'login' || hash === 'signup';
+  const categoryId = hash.startsWith('category/') ? hash.split('/')[1] : '';
+  const catalogRoute = hash === 'products' || categories.some((item) => item.id === categoryId);
   if (cartDialog.open) cartDialog.close();
   if (infoDialog.open) infoDialog.close();
   document.title = auth
     ? `${hash === 'signup' ? 'Create an account' : 'Welcome back'} — ShopBoard`
-    : 'ShopBoard — Goods for a better everyday';
+    : catalogRoute
+      ? 'Products — ShopBoard'
+      : 'ShopBoard — Goods for a better everyday';
   if (auth) {
     authPage(hash);
     window.scrollTo(0, 0);
+  } else if (catalogRoute) {
+    if (categoryId) setCategory(categoryId);
+    else if (hash === 'products') setCategory('');
+    productsPage();
+    window.scrollTo(0, 0);
   } else {
-    const id = hash.startsWith('category/') ? hash.split('/')[1] : '';
-    activeCategory = categories.some((category) => category.id === id) ? id : '';
-    if (hash === 'home') query = '';
-    if (app.querySelector('.product-grid')) {
-      app.querySelector('#product-search').value = query;
+    if (hash === 'home') resetCatalog();
+    if (app.querySelector('.shop-content')) {
+      app.querySelector('#global-product-search').value = catalogState.query;
       renderProducts();
     } else {
       storefront();
     }
-    if (hash === 'shop' || activeCategory)
-      requestAnimationFrame(() =>
-        app.querySelector('#products').scrollIntoView({ behavior: 'instant', block: 'start' }),
-      );
-    else if (hash === 'main-content') app.querySelector('#main-content').focus();
+    if (hash === 'main-content') app.querySelector('#main-content').focus();
     else window.scrollTo(0, 0);
   }
 }
 window.addEventListener('hashchange', route);
+initConsoleApi({
+  onNavigate: () => {
+    if (location.hash === '#login' || location.hash === '#signup') location.hash = 'products';
+  },
+  onUpdate: () => {
+    renderCatalogPage();
+    if (app.querySelector('.shop-content')) renderProducts();
+  },
+});
 route();

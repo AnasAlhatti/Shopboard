@@ -36,7 +36,7 @@ try {
   page.on('pageerror', (error) => errors.push(error.message));
   for (const width of [360, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 });
-    for (const route of ['home', 'login', 'signup']) {
+    for (const route of ['home', 'products', 'login', 'signup']) {
       await page.goto(`${base}#${route}`);
       await page.locator('h1').waitFor();
       await page.evaluate(() => document.fonts.ready);
@@ -53,8 +53,8 @@ try {
       const layout = await page.evaluate(() => ({
         width: innerWidth,
         documentWidth: document.documentElement.scrollWidth,
-        unlabeledInputs: [...document.querySelectorAll('input')].filter(
-          (input) => !input.labels.length,
+        unlabeledInputs: [...document.querySelectorAll('input, select')].filter(
+          (control) => !control.labels.length,
         ).length,
         overflow: [...document.querySelectorAll('main a, main button, main input, h1')]
           .filter((element) => element.getClientRects().length)
@@ -65,7 +65,7 @@ try {
           .map((element) => element.outerHTML.slice(0, 150)),
       }));
       assert.ok(layout.documentWidth <= width, `${route} at ${width}: horizontal overflow`);
-      assert.equal(layout.unlabeledInputs, 0, `${route}: every input has a label`);
+      assert.equal(layout.unlabeledInputs, 0, `${route}: every form control has a label`);
       assert.deepEqual(layout.overflow, [], `${route} at ${width}: clipped content`);
       await page.screenshot({ path: path.join(output, `${route}-${width}.png`), fullPage: true });
       results.push({ route, width, ...layout });
@@ -74,7 +74,6 @@ try {
   }
 
   await page.goto(`${base}#home`);
-  const heroPhoto = await page.locator('.hero-art .photo').elementHandle();
   const journalPhoto = await page
     .locator('.product-card', { hasText: 'Notebook Journal' })
     .locator('.photo')
@@ -91,21 +90,22 @@ try {
     .getByRole('link', { name: 'Workspace' })
     .click();
   await page.waitForURL('**/#category/workspace');
-  assert.equal(
-    await heroPhoto.evaluate((element) => element.isConnected),
-    true,
-    'Category navigation must preserve the loaded hero image',
-  );
+  await page.locator('#products-page-title').waitFor();
+  assert.equal(await page.locator('.product-card').count(), 1);
   await page
     .getByRole('navigation', { name: 'Main navigation' })
     .getByRole('link', { name: 'Home', exact: true })
     .click();
   await page.waitForURL('**/#home');
+  const returnedJournalPhoto = await page
+    .locator('.product-card', { hasText: 'Notebook Journal' })
+    .locator('.photo')
+    .elementHandle();
   for (const width of [360, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 });
     await page.locator('[data-product-card="journal"]').hover();
     assert.equal(
-      await journalPhoto.evaluate(
+      await returnedJournalPhoto.evaluate(
         (element) =>
           element.isConnected &&
           element.querySelector('img').complete &&
@@ -116,7 +116,27 @@ try {
       `Image remains loaded and stable on hover and resize at ${width}px`,
     );
   }
-  console.log('PASS image stability: filtering and category navigation preserve loaded images');
+  console.log(
+    'PASS image stability: filtering preserves images and category routes render cleanly',
+  );
+
+  await page.goto(`${base}#products`);
+  await page.getByLabel('Sort by').selectOption('price-asc');
+  assert.match(await page.locator('.product-card').first().innerText(), /Stoneware Mug/);
+  const consoleSort = await page.evaluate(() => window.shop.sort('price', 'desc'));
+  assert.equal(consoleSort[0].id, 'blanket');
+  assert.equal(await page.getByLabel('Sort by').inputValue(), 'price-desc');
+  assert.match(await page.locator('.product-card').first().innerText(), /Linen Throw Blanket/);
+  const consoleSearch = await page.evaluate(() => window.shop.search('mug'));
+  assert.equal(consoleSearch.length, 1);
+  assert.equal(await page.locator('#product-search').inputValue(), 'mug');
+  assert.equal(await page.locator('.product-card').count(), 1);
+  assert.match(await page.locator('.product-card').innerText(), /Stoneware Mug/);
+  await page.goto(`${base}#login`);
+  await page.evaluate(() => window.shop.reset());
+  await page.waitForURL('**/#products');
+  assert.equal(await page.locator('.product-card').count(), 6);
+  console.log('PASS products: UI sorting, console synchronization, search, auth redirect');
 
   await page.goto(`${base}#signup`);
   const form = page.locator('.auth-form');
@@ -180,7 +200,7 @@ try {
     chromeFlags: ['--headless=new', '--disable-gpu', '--no-first-run'],
   });
   for (const device of ['mobile', 'desktop']) {
-    for (const route of ['home', 'login', 'signup']) {
+    for (const route of ['home', 'products', 'login', 'signup']) {
       const result = await lighthouse(`${base}#${route}`, {
         port: chrome.port,
         onlyCategories: ['accessibility'],

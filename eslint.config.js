@@ -10,12 +10,12 @@ export default [
     languageOptions: { globals: globals.browser },
   },
   {
-    files: ['*.config.js', 'scripts/**/*.mjs'],
+    files: ['*.config.js', 'scripts/**/*.mjs', 'tests/**/*.mjs'],
     languageOptions: { globals: globals.node },
   },
   {
     // Playwright evaluate callbacks execute inside the browser.
-    files: ['scripts/verify-ui.mjs'],
+    files: ['scripts/verify-ui.mjs', 'tests/**/*.mjs'],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
   prettier,

@@ -11,4 +11,5 @@ Vite (vanilla), HTML, CSS
 3. Mobile-first, min-width
 4. No !important
 5. Explain every change
-6. Push to Master without approval when I ask you to push last commits
+6. Push to Master without approval when I ask you to push the last commits
+7. Clean architecture
