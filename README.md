@@ -19,15 +19,18 @@ with development dependencies installed.
 
 ## Quality checks
 
-| Command                | Purpose                                                                            |
-| ---------------------- | ---------------------------------------------------------------------------------- |
-| `npm run format`       | Apply Prettier formatting                                                          |
-| `npm run format:check` | Check formatting without editing files                                             |
-| `npm run lint`         | Run ESLint; errors or warnings fail the check                                      |
-| `npm run lint:fix`     | Apply available ESLint fixes                                                       |
-| `npm run check`        | Check formatting, lint, and build for production                                   |
-| `npm run verify:hooks` | Verify real successful and rejected commits in an isolated test repository         |
-| `npm run verify:ui`    | Build, check responsive layouts and forms, and run Lighthouse accessibility audits |
+| Command                       | Purpose                                                                            |
+| ----------------------------- | ---------------------------------------------------------------------------------- |
+| `npm run format`              | Apply Prettier formatting                                                          |
+| `npm run format:check`        | Check formatting without editing files                                             |
+| `npm run lint`                | Run ESLint; errors or warnings fail the check                                      |
+| `npm run lint:fix`            | Apply available ESLint fixes                                                       |
+| `npm run check`               | Check formatting, lint, and build for production                                   |
+| `npm run test`                | Run the catalog, cart, and app coordination tests                                  |
+| `npm run verify:architecture` | Confirm that only the page adapter touches the DOM                                 |
+| `npm run verify:part1`        | Run the complete Part 1 browser acceptance checks                                  |
+| `npm run verify:hooks`        | Verify real successful and rejected commits in an isolated test repository         |
+| `npm run verify:ui`           | Build, check responsive layouts and forms, and run Lighthouse accessibility audits |
 
 On each normal commit, Husky runs lint-staged against staged files:
 
@@ -55,6 +58,20 @@ The checks cover home, login, and signup at 360, 768, and 1280 pixels:
 
 Screenshots, HTML/JSON Lighthouse reports, and hook-test evidence are saved under
 `output/quality/`, which is ignored by Git.
+
+## File map
+
+- `src/data/catalog-data.js` defines the immutable products and categories used by the shop.
+- `src/catalog/catalog-store.js` owns DOM-free search, filtering, sorting, and catalog state.
+- `src/cart/cart-store.js` owns DOM-free cart quantities, totals, validation, and persistence.
+- `src/page/shop-page.js` is the only production file that reads or changes the DOM and browser page state.
+- `src/app.js` coordinates catalog and cart actions with the page through module interfaces.
+- `src/main.js` creates the modules, injects browser storage, and starts the application.
+- `src/shared/presentation.js` formats icons, sprite-backed images, and currency as pure values.
+- `src/style.css` contains all responsive presentation rules.
+
+A future wishlist store belongs in `src/wishlist/wishlist-store.js`; its visible UI belongs in
+`src/page/shop-page.js`, and coordination between the two belongs in `src/app.js`.
 
 ## Preview functionality
 

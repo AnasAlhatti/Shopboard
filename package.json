@@ -12,7 +12,9 @@
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix --max-warnings=0",
+    "test": "node tests/catalog.test.mjs && node tests/cart.test.mjs && node tests/app.test.mjs",
     "check": "npm run format:check && npm run lint && npm run build",
+    "verify:architecture": "node scripts/verify-architecture.mjs",
     "verify:part1": "npm run build && node scripts/verify-part1.mjs",
     "verify:ui": "npm run build && node scripts/verify-ui.mjs",
     "verify:hooks": "node scripts/verify-hooks.mjs"
