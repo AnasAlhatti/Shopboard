@@ -1,7 +1,7 @@
 const STORAGE_KEY = 'shopboard-cart';
 const MAX_QUANTITY = 99;
 
-export function createCartStore(products, storage = globalThis.localStorage) {
+export function createCartStore(products, storage) {
   const quantities = loadQuantities(products, storage);
 
   function save() {
