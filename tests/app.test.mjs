@@ -64,6 +64,9 @@ app.start();
 assert.equal(calls.connected, 1);
 assert.equal(calls.installed, 1);
 
+actions.navigate('category/missing');
+assert.equal(catalog.getState().category, '');
+
 actions.addToCart('mug');
 assert.equal(calls.add, 1);
 assert.equal(calls.syncCart, 1);

@@ -16,8 +16,9 @@ export function createApp({ catalog, cart, page }) {
   const actions = Object.freeze({
     navigate(route) {
       const category = route.startsWith('category/') ? route.split('/')[1] : '';
-      if (category) catalog.filter({ category });
-      else if (route === 'products') catalog.filter({ category: '' });
+      if (category && catalog.categories.some((item) => item.id === category)) {
+        catalog.filter({ category });
+      } else if (route === 'products') catalog.filter({ category: '' });
       else if (route === 'home') catalog.reset();
       page.render(model());
     },
