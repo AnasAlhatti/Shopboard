@@ -1,4 +1,18 @@
-import type { Category, Product } from '../types.ts';
+export type ImageCrop = readonly [x: number, y: number, width: number, height: number];
+
+export interface Product {
+  readonly id: string;
+  readonly name: string;
+  readonly price: number;
+  readonly category: string;
+  readonly image: ImageCrop;
+}
+
+export interface Category {
+  readonly id: string;
+  readonly name: string;
+  readonly image: ImageCrop;
+}
 
 const productData: readonly Product[] = [
   { id: 'mug', name: 'Stoneware Mug', price: 18, category: 'home', image: [126, 549, 221, 121] },

@@ -1,12 +1,6 @@
-import type {
-  CartStore,
-  CatalogStore,
-  ConsoleApi,
-  Product,
-  ShopActions,
-  ShopModel,
-  ShopPage,
-} from './types.ts';
+import type { CartStore } from './cart/cart-store.ts';
+import type { Product } from './data/catalog-data.ts';
+import type { CatalogStore, ConsoleApi, ShopActions, ShopModel, ShopPage } from './types.ts';
 
 interface AppDependencies {
   catalog: CatalogStore;

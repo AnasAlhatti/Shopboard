@@ -68,10 +68,10 @@ Screenshots, HTML/JSON Lighthouse reports, and hook-test evidence are saved unde
 - `index.html` provides the application mount point, shared dialogs, metadata, and TypeScript entry.
 - `src/main.ts` creates the catalog, cart, page, and app modules before starting the storefront.
 - `src/app.ts` coordinates catalog and cart actions with page updates through small module interfaces.
-- `src/types.ts` defines the domain and module contracts shared across the application.
-- `src/data/catalog-data.ts` defines the immutable products and categories used by the shop.
+- `src/types.ts` defines only the coordination contracts shared across application modules.
+- `src/data/catalog-data.ts` owns the product/category types and immutable shop data.
 - `src/catalog/catalog-store.ts` owns DOM-free search, filtering, sorting, and catalog state.
-- `src/cart/cart-store.ts` owns DOM-free cart quantities, totals, validation, and persistence.
+- `src/cart/cart-store.ts` owns the cart types, DOM-free quantities, totals, validation, and persistence.
 - `src/page/shop-page.ts` is the only production file that reads or changes the DOM and browser page state.
 - `src/shared/presentation.ts` formats icons, sprite-backed images, and currency as pure values.
 - `src/style.css` contains every responsive visual rule for the storefront, catalog, dialogs, and account pages.

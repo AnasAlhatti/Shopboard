@@ -10,7 +10,7 @@ const paths = {
   box: '<path d="m12 2 10 5v11l-10 5-10-5V7zM2 7l10 5 10-5M12 12v11M7 4l10 5v6"/>',
   close: '<path d="m6 6 12 12M6 18 18 6"/>',
   eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
-} as const;
+};
 
 type IconName = keyof typeof paths;
 

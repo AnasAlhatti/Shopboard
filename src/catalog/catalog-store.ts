@@ -1,12 +1,5 @@
-import type {
-  CatalogFilter,
-  CatalogState,
-  CatalogStore,
-  Category,
-  Product,
-  SortBy,
-  SortOrder,
-} from '../types.ts';
+import type { CatalogFilter, CatalogState, CatalogStore, SortBy, SortOrder } from '../types.ts';
+import type { Category, Product } from '../data/catalog-data.ts';
 
 export function createCatalogStore(
   products: readonly Product[],

@@ -1,18 +1,5 @@
-export type ImageCrop = readonly [x: number, y: number, width: number, height: number];
-
-export interface Product {
-  readonly id: string;
-  readonly name: string;
-  readonly price: number;
-  readonly category: string;
-  readonly image: ImageCrop;
-}
-
-export interface Category {
-  readonly id: string;
-  readonly name: string;
-  readonly image: ImageCrop;
-}
+import type { CartSnapshot } from './cart/cart-store.ts';
+import type { Category, Product } from './data/catalog-data.ts';
 
 export type SortBy = 'default' | 'price' | 'name';
 export type SortOrder = 'asc' | 'desc';
@@ -33,21 +20,6 @@ export interface CatalogFilter {
   maxPrice?: number | null;
 }
 
-export interface StorageAdapter {
-  getItem(key: string): string | null;
-  setItem(key: string, value: string): void;
-}
-
-export interface CartItem extends Product {
-  readonly quantity: number;
-}
-
-export interface CartSnapshot {
-  readonly items: readonly CartItem[];
-  readonly count: number;
-  readonly subtotal: number;
-}
-
 export interface CatalogStore {
   readonly products: readonly Product[];
   readonly categories: readonly Category[];
@@ -57,14 +29,6 @@ export interface CatalogStore {
   filter(criteria?: CatalogFilter): Product[];
   sort(by: SortBy, order?: SortOrder): Product[];
   reset(): Product[];
-}
-
-export interface CartStore {
-  getSnapshot(): CartSnapshot;
-  add(id: string): CartSnapshot;
-  change(id: string, delta: number): CartSnapshot;
-  remove(id: string): CartSnapshot;
-  clear(): CartSnapshot;
 }
 
 export interface ShopModel {

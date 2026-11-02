@@ -10,6 +10,11 @@ export default tseslint.config(
   {
     files: ['src/**/*.ts'],
     languageOptions: { globals: globals.browser },
+    rules: {
+      '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-non-null-assertion': 'error',
+    },
   },
   {
     files: ['*.config.js', 'scripts/**/*.mjs', 'tests/**/*.mjs'],

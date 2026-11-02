@@ -1,17 +1,14 @@
 import { icon, money, photo } from '../shared/presentation.js';
+import type { CartItem, CartSnapshot, StorageAdapter } from '../cart/cart-store.ts';
+import type { Category, Product } from '../data/catalog-data.ts';
 import type {
-  CartItem,
-  CartSnapshot,
   CatalogState,
-  Category,
   ConsoleApi,
-  Product,
   ShopActions,
   ShopModel,
   ShopPage,
   SortBy,
   SortOrder,
-  StorageAdapter,
 } from '../types.ts';
 
 declare global {
@@ -36,7 +33,7 @@ const information = {
     'Account and newsletter forms do not send or save your details in this preview. Your shopping bag is saved only in this browser so you can return to it.',
   'Password reset':
     'Password recovery will be available when account access launches. No email has been sent.',
-} as const;
+};
 
 type InformationTitle = keyof typeof information;
 
