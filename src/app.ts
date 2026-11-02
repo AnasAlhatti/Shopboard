@@ -1,5 +1,21 @@
-export function createApp({ catalog, cart, page }) {
-  const model = () => ({
+import type {
+  CartStore,
+  CatalogStore,
+  ConsoleApi,
+  Product,
+  ShopActions,
+  ShopModel,
+  ShopPage,
+} from './types.ts';
+
+interface AppDependencies {
+  catalog: CatalogStore;
+  cart: CartStore;
+  page: ShopPage;
+}
+
+export function createApp({ catalog, cart, page }: AppDependencies) {
+  const model = (): ShopModel => ({
     products: catalog.products,
     categories: catalog.categories,
     catalog: catalog.getState(),
@@ -7,18 +23,18 @@ export function createApp({ catalog, cart, page }) {
     cart: cart.getSnapshot(),
   });
 
-  function updateCatalog(operation) {
+  function updateCatalog(operation: () => Product[]): Product[] {
     const results = operation();
     page.updateCatalog(model());
     return results;
   }
 
-  const actions = Object.freeze({
+  const actions = Object.freeze<ShopActions>({
     navigate(route) {
-      const category = route.startsWith('category/') ? route.split('/')[1] : '';
-      if (category && catalog.categories.some((item) => item.id === category)) {
+      const category = route.startsWith('category/') ? (route.split('/')[1] ?? '') : '';
+      if (category && catalog.categories.some((item) => item.id === category))
         catalog.filter({ category });
-      } else if (route === 'products') catalog.filter({ category: '' });
+      else if (route === 'products') catalog.filter({ category: '' });
       else if (route === 'home') catalog.reset();
       page.render(model());
     },
@@ -53,7 +69,7 @@ export function createApp({ catalog, cart, page }) {
     },
   });
 
-  const consoleApi = Object.freeze({
+  const consoleApi = Object.freeze<ConsoleApi>({
     products: catalog.products,
     categories: catalog.categories,
     search(term) {

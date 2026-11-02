@@ -1,13 +1,26 @@
 import assert from 'node:assert/strict';
 import { access, mkdir, writeFile } from 'node:fs/promises';
+import { createServer } from 'node:net';
 import path from 'node:path';
 import { chromium } from 'playwright';
 import { preview } from 'vite';
 import lighthouse from 'lighthouse';
-import { launch } from 'chrome-launcher';
 
 const output = path.resolve('output/quality');
 await mkdir(output, { recursive: true });
+const lighthousePort = await new Promise((resolve, reject) => {
+  const socket = createServer();
+  socket.once('error', reject);
+  socket.listen(0, '127.0.0.1', () => {
+    const address = socket.address();
+    if (!address || typeof address === 'string') {
+      socket.close();
+      reject(new Error('Could not reserve a Lighthouse debugging port.'));
+      return;
+    }
+    socket.close((error) => (error ? reject(error) : resolve(address.port)));
+  });
+});
 const candidates = [
   process.env.CHROME_PATH,
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
@@ -27,10 +40,13 @@ for (const candidate of candidates) {
 const server = await preview({ preview: { host: '127.0.0.1', port: 4175, strictPort: true } });
 const base = 'http://127.0.0.1:4175/';
 let browser;
-let chrome;
 const results = [];
 try {
-  browser = await chromium.launch({ executablePath, headless: true });
+  browser = await chromium.launch({
+    executablePath,
+    headless: true,
+    args: [`--remote-debugging-port=${lighthousePort}`],
+  });
   const page = await browser.newPage({ reducedMotion: 'reduce' });
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
@@ -97,6 +113,7 @@ try {
     .getByRole('link', { name: 'Home', exact: true })
     .click();
   await page.waitForURL('**/#home');
+  await page.locator('.shop-content').waitFor();
   const returnedJournalPhoto = await page
     .locator('.product-card', { hasText: 'Notebook Journal' })
     .locator('.photo')
@@ -192,17 +209,10 @@ try {
   assert.match(await page.locator('.product-card:not([hidden])').innerText(), /Notebook Journal/);
   assert.deepEqual(errors, [], 'No browser JavaScript errors');
   console.log('PASS storefront: cart totals, dialog Escape, search, empty state, category filter');
-  await browser.close();
-  browser = undefined;
-
-  chrome = await launch({
-    chromePath: executablePath,
-    chromeFlags: ['--headless=new', '--disable-gpu', '--no-first-run'],
-  });
   for (const device of ['mobile', 'desktop']) {
     for (const route of ['home', 'products', 'login', 'signup']) {
       const result = await lighthouse(`${base}#${route}`, {
-        port: chrome.port,
+        port: lighthousePort,
         onlyCategories: ['accessibility'],
         output: ['html', 'json'],
         logLevel: 'error',
@@ -235,7 +245,6 @@ try {
   console.log(`Reports and screenshots saved to ${output}`);
 } finally {
   await browser?.close();
-  await chrome?.kill();
   await new Promise((resolve, reject) =>
     server.httpServer.close((error) => (error ? reject(error) : resolve())),
   );

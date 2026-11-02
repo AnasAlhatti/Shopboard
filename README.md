@@ -1,6 +1,7 @@
 # ShopBoard
 
-A vanilla Vite storefront built with semantic HTML, mobile-first CSS, Flexbox, and Grid.
+A vanilla TypeScript and Vite storefront built with semantic HTML, mobile-first CSS,
+Flexbox, and Grid.
 The storefront, login, and signup views each render one `h1`. Every input has an
 associated label. Signup uses native required, email, and minimum-length validation,
 plus the browser's constraint-validation API for password confirmation.
@@ -25,7 +26,8 @@ with development dependencies installed.
 | `npm run format:check`        | Check formatting without editing files                                             |
 | `npm run lint`                | Run ESLint; errors or warnings fail the check                                      |
 | `npm run lint:fix`            | Apply available ESLint fixes                                                       |
-| `npm run check`               | Check formatting, lint, and build for production                                   |
+| `npm run typecheck`           | Run strict TypeScript checks without emitting files                                |
+| `npm run check`               | Check formatting, types, lint, and the production build                            |
 | `npm run test`                | Run the catalog, cart, and app coordination tests                                  |
 | `npm run verify:architecture` | Confirm that only the page adapter touches the DOM                                 |
 | `npm run verify:part1`        | Run the complete Part 1 browser acceptance checks                                  |
@@ -35,12 +37,12 @@ with development dependencies installed.
 On each normal commit, Husky runs lint-staged against staged files:
 
 - Prettier fixes formatting and stages the corrected content.
-- ESLint checks JavaScript files with zero warnings allowed.
+- ESLint checks JavaScript and TypeScript files with zero warnings allowed.
 - An ESLint error rejects the commit. Unstaged work is preserved by lint-staged.
 
-`verify:hooks` deliberately stages badly formatted JavaScript, commits it through the
+`verify:hooks` deliberately stages badly formatted TypeScript, commits it through the
 real Husky hook, and checks that the committed content is formatted. It then stages
-an undefined variable and verifies that the next commit fails without changing HEAD.
+an explicit `any` and verifies that the next commit fails without changing HEAD.
 It never stages or commits the main working tree.
 
 ## Browser verification
@@ -63,14 +65,15 @@ Screenshots, HTML/JSON Lighthouse reports, and hook-test evidence are saved unde
 
 ### Application files
 
-- `index.html` provides the application mount point, shared dialogs, metadata, and JavaScript entry.
-- `src/main.js` creates the catalog, cart, page, and app modules before starting the storefront.
-- `src/app.js` coordinates catalog and cart actions with page updates through small module interfaces.
-- `src/data/catalog-data.js` defines the immutable products and categories used by the shop.
-- `src/catalog/catalog-store.js` owns DOM-free search, filtering, sorting, and catalog state.
-- `src/cart/cart-store.js` owns DOM-free cart quantities, totals, validation, and persistence.
-- `src/page/shop-page.js` is the only production file that reads or changes the DOM and browser page state.
-- `src/shared/presentation.js` formats icons, sprite-backed images, and currency as pure values.
+- `index.html` provides the application mount point, shared dialogs, metadata, and TypeScript entry.
+- `src/main.ts` creates the catalog, cart, page, and app modules before starting the storefront.
+- `src/app.ts` coordinates catalog and cart actions with page updates through small module interfaces.
+- `src/types.ts` defines the domain and module contracts shared across the application.
+- `src/data/catalog-data.ts` defines the immutable products and categories used by the shop.
+- `src/catalog/catalog-store.ts` owns DOM-free search, filtering, sorting, and catalog state.
+- `src/cart/cart-store.ts` owns DOM-free cart quantities, totals, validation, and persistence.
+- `src/page/shop-page.ts` is the only production file that reads or changes the DOM and browser page state.
+- `src/shared/presentation.ts` formats icons, sprite-backed images, and currency as pure values.
 - `src/style.css` contains every responsive visual rule for the storefront, catalog, dialogs, and account pages.
 
 ### Test files
@@ -82,12 +85,12 @@ Screenshots, HTML/JSON Lighthouse reports, and hook-test evidence are saved unde
 ### Verification files
 
 - `scripts/verify-part1.mjs` runs the complete Part 1 behavior checklist in a real browser.
-- `scripts/verify-architecture.mjs` fails if any production file other than `shop-page.js` touches the DOM.
+- `scripts/verify-architecture.mjs` fails if any production file other than `shop-page.ts` touches the DOM.
 - `scripts/verify-ui.mjs` checks routes, forms, responsive layouts, image stability, and accessibility.
 - `scripts/verify-hooks.mjs` proves that the real pre-commit hook formats valid code and blocks invalid code.
 
-A future wishlist store belongs in `src/wishlist/wishlist-store.js`; its visible UI belongs in
-`src/page/shop-page.js`, and coordination between the two belongs in `src/app.js`.
+A future wishlist store belongs in `src/wishlist/wishlist-store.ts`; its visible UI belongs in
+`src/page/shop-page.ts`, and coordination between the two belongs in `src/app.ts`.
 
 ## Preview functionality
 

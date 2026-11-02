@@ -7,20 +7,21 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
     "prepare": "husky",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix --max-warnings=0",
-    "test": "node tests/catalog.test.mjs && node tests/cart.test.mjs && node tests/app.test.mjs",
-    "check": "npm run format:check && npm run lint && npm run build",
+    "test": "node tests/catalog.test.mjs && node tests/cart.test.mjs && node tests/app.test.mjs && node tests/page-startup.test.mjs",
+    "check": "npm run format:check && npm run typecheck && npm run lint && npm run build",
     "verify:architecture": "node scripts/verify-architecture.mjs",
     "verify:part1": "npm run build && node scripts/verify-part1.mjs",
     "verify:ui": "npm run build && node scripts/verify-ui.mjs",
     "verify:hooks": "node scripts/verify-hooks.mjs"
   },
   "lint-staged": {
-    "*.{js,mjs,cjs}": [
+    "*.{js,mjs,cjs,ts}": [
       "prettier --write",
       "eslint --max-warnings=0"
     ],
@@ -28,7 +29,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "chrome-launcher": "^1.2.2",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",
@@ -37,6 +37,8 @@
     "lint-staged": "^17.6.0",
     "playwright": "^1.64.1",
     "prettier": "^3.9.10",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1",
     "vite": "^8.3.5"
   }
 }

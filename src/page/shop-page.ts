@@ -1,6 +1,26 @@
 import { icon, money, photo } from '../shared/presentation.js';
+import type {
+  CartItem,
+  CartSnapshot,
+  CatalogState,
+  Category,
+  ConsoleApi,
+  Product,
+  ShopActions,
+  ShopModel,
+  ShopPage,
+  SortBy,
+  SortOrder,
+  StorageAdapter,
+} from '../types.ts';
 
-export const browserStorage = globalThis.localStorage;
+declare global {
+  interface Window {
+    shop: ConsoleApi;
+  }
+}
+
+export const browserStorage: StorageAdapter = globalThis.localStorage;
 
 const information = {
   About:
@@ -16,21 +36,34 @@ const information = {
     'Account and newsletter forms do not send or save your details in this preview. Your shopping bag is saved only in this browser so you can return to it.',
   'Password reset':
     'Password recovery will be available when account access launches. No email has been sent.',
-};
+} as const;
 
-export function createShopPage({ products, categories }) {
-  const app = document.querySelector('#app');
-  const cartDialog = document.querySelector('#cart-dialog');
-  const infoDialog = document.querySelector('#info-dialog');
-  let actions;
-  let currentModel;
-  let toastTimer;
+type InformationTitle = keyof typeof information;
 
-  function connect(value) {
+interface PageDependencies {
+  products: readonly Product[];
+  categories: readonly Category[];
+}
+
+export function createShopPage({ products, categories }: PageDependencies): ShopPage {
+  const app = required<HTMLElement>(document, '#app');
+  const cartDialog = required<HTMLDialogElement>(document, '#cart-dialog');
+  const infoDialog = required<HTMLDialogElement>(document, '#info-dialog');
+  const toast = required<HTMLElement>(document, '#toast');
+  let actions: ShopActions;
+  let currentModel: ShopModel | undefined;
+  let toastTimer: ReturnType<typeof setTimeout> | undefined;
+
+  function connect(value: ShopActions): void {
     actions = value;
   }
 
-  function start() {
+  function getCurrentModel(): ShopModel {
+    if (!currentModel) throw new Error('Shop page has not rendered a model yet.');
+    return currentModel;
+  }
+
+  function start(): void {
     for (const dialog of [cartDialog, infoDialog]) {
       dialog.addEventListener('click', (event) => {
         const bounds = dialog.getBoundingClientRect();
@@ -49,15 +82,15 @@ export function createShopPage({ products, categories }) {
     route();
   }
 
-  function route() {
+  function route(): void {
     actions.navigate(location.hash.slice(1));
   }
 
-  function render(model) {
+  function render(model: ShopModel): void {
     currentModel = model;
     const hash = location.hash.slice(1);
     const auth = hash === 'login' || hash === 'signup';
-    const categoryId = hash.startsWith('category/') ? hash.split('/')[1] : '';
+    const categoryId = hash.startsWith('category/') ? (hash.split('/')[1] ?? '') : '';
     const catalogRoute = hash === 'products' || categories.some((item) => item.id === categoryId);
     if (cartDialog.open) cartDialog.close();
     if (infoDialog.open) infoDialog.close();
@@ -67,15 +100,15 @@ export function createShopPage({ products, categories }) {
         ? 'Products — ShopBoard'
         : 'ShopBoard — Goods for a better everyday';
 
-    if (auth) authPage(hash, model);
+    if (auth) authPage(hash);
     else if (catalogRoute) productsPage(model);
     else storefront(model);
 
-    if (hash === 'main-content') app.querySelector('#main-content').focus();
-    else window.scrollTo(0, 0);
+    if (hash === 'main-content') required<HTMLElement>(app, '#main-content').focus();
+    else window.scrollTo({ left: 0, top: 0 });
   }
 
-  function storefront(model) {
+  function storefront(model: ShopModel): void {
     app.innerHTML = `${header(model.cart.count)}<main id="main-content" tabindex="-1">
       <section class="hero" aria-labelledby="hero-title"><div class="hero-art">${photo(665, 98, 1007, 271, true)}</div><div class="container hero-inner"><div class="hero-copy"><p class="eyebrow">THE EVERYDAY, WELL CHOSEN</p><h1 id="hero-title">Find something<br/>worth keeping.</h1><p class="hero-subtitle">Curated goods for everyday living.</p><a class="button button-primary" href="#products">Shop the collection ${icon('arrow')}</a><span class="hero-footnote">Made for your space. Chosen for your life.</span></div></div></section>
       <div class="container shop-content"><nav class="category-grid" aria-label="Shop by category">${categories.map((category) => `<a href="#category/${category.id}" class="category-card" data-category="${category.id}">${photo(...category.image)}<span class="category-name">${category.name} <span aria-hidden="true">→</span></span></a>`).join('')}</nav>
@@ -87,7 +120,7 @@ export function createShopPage({ products, categories }) {
         ['box', 'Here to help', 'A little care goes a long way'],
       ]
         .map(
-          ([symbol, title, description]) =>
+          ([symbol = 'arrow', title = '', description = '']) =>
             `<div class="benefit">${icon(symbol)}<div><h3>${title}</h3><p>${description}</p></div></div>`,
         )
         .join('')}</section></div>
@@ -96,23 +129,22 @@ export function createShopPage({ products, categories }) {
     renderHomeProducts(model);
     bindShopChrome();
     bindInfoLinks();
-    app.querySelector('.search-form').addEventListener('submit', (event) => {
+    required<HTMLFormElement>(app, '.search-form').addEventListener('submit', (event) => {
       event.preventDefault();
-      document.querySelector('#products').scrollIntoView({ behavior: 'smooth' });
+      required<HTMLElement>(document, '#products').scrollIntoView({ behavior: 'smooth' });
     });
-    app
-      .querySelector('#global-product-search')
-      .addEventListener('input', (event) => actions.search(event.target.value));
-    app.querySelector('.view-all').addEventListener('click', clearFilters);
-    app.querySelector('.clear-filters').addEventListener('click', clearFilters);
-    app.querySelector('.newsletter-form').addEventListener('submit', (event) => {
+    const globalSearch = required<HTMLInputElement>(app, '#global-product-search');
+    globalSearch.addEventListener('input', () => actions.search(globalSearch.value));
+    required<HTMLButtonElement>(app, '.view-all').addEventListener('click', clearFilters);
+    required<HTMLButtonElement>(app, '.clear-filters').addEventListener('click', clearFilters);
+    required<HTMLFormElement>(app, '.newsletter-form').addEventListener('submit', (event) => {
       event.preventDefault();
-      app.querySelector('.newsletter-status').textContent =
+      required<HTMLElement>(app, '.newsletter-status').textContent =
         'Thanks for your interest! Newsletter subscriptions are coming soon.';
     });
   }
 
-  function renderHomeProducts(model) {
+  function renderHomeProducts(model: ShopModel): void {
     const grid = app.querySelector('.shop-content .product-grid');
     if (!grid) return;
     if (!grid.children.length) {
@@ -120,24 +152,26 @@ export function createShopPage({ products, categories }) {
         products.map(homeProductCard).join('') +
         `<div class="empty-results" hidden>${icon('search')}<h3>No finds just yet.</h3><p>Try another search or explore the full collection.</p><button class="button button-green clear-empty" type="button">Explore all products</button></div>`;
       bindAddButtons(grid);
-      grid.querySelector('.clear-empty').addEventListener('click', clearFilters);
+      required<HTMLButtonElement>(grid, '.clear-empty').addEventListener('click', clearFilters);
     }
     const matchingIds = new Set(model.results.map((product) => product.id));
-    grid.querySelectorAll('[data-product-card]').forEach((card) => {
-      card.hidden = !matchingIds.has(card.dataset.productCard);
+    grid.querySelectorAll<HTMLElement>('[data-product-card]').forEach((card) => {
+      const id = card.dataset.productCard;
+      card.hidden = !id || !matchingIds.has(id);
     });
-    grid.querySelector('.empty-results').hidden = model.results.length > 0;
-    app.querySelector('#global-product-search').value = model.catalog.query;
-    app.querySelector('#products-title').textContent = model.catalog.category
-      ? `${categories.find((category) => category.id === model.catalog.category).name} essentials`
+    required<HTMLElement>(grid, '.empty-results').hidden = model.results.length > 0;
+    required<HTMLInputElement>(app, '#global-product-search').value = model.catalog.query;
+    required<HTMLElement>(app, '#products-title').textContent = model.catalog.category
+      ? `${categories.find((category) => category.id === model.catalog.category)?.name ?? 'Category'} essentials`
       : 'New arrivals';
-    app.querySelector('.filter-summary').hidden = !model.catalog.category && !model.catalog.query;
-    app.querySelector('#results-description').textContent =
+    required<HTMLElement>(app, '.filter-summary').hidden =
+      !model.catalog.category && !model.catalog.query;
+    required<HTMLElement>(app, '#results-description').textContent =
       `${model.results.length} ${model.results.length === 1 ? 'find' : 'finds'}${model.catalog.query ? ` for “${model.catalog.query}”` : ''}`;
     syncActiveNavigation(model.catalog.category);
   }
 
-  function productsPage(model) {
+  function productsPage(model: ShopModel): void {
     const counts = categoryCounts(products, categories);
     app.innerHTML = `${header(model.cart.count)}<main id="main-content" class="products-page" tabindex="-1"><div class="container">
       <nav class="breadcrumb" aria-label="Breadcrumb"><a href="#home">Home</a><span aria-hidden="true">/</span><span>Products</span></nav>
@@ -148,21 +182,22 @@ export function createShopPage({ products, categories }) {
       <section aria-labelledby="products-page-title"><div class="product-grid catalog-product-grid"></div></section></div></main>${footer()}`;
     bindShopChrome();
     bindInfoLinks();
-    app
-      .querySelector('#product-search')
-      .addEventListener('input', (event) => actions.search(event.target.value));
-    app.querySelector('#product-sort').addEventListener('change', (event) => {
-      const [by, order] = event.target.value.split('-');
-      actions.sort(by, order);
+    const productSearch = required<HTMLInputElement>(app, '#product-search');
+    productSearch.addEventListener('input', () => actions.search(productSearch.value));
+    const productSort = required<HTMLSelectElement>(app, '#product-sort');
+    productSort.addEventListener('change', () => {
+      const [by = 'default', order = 'asc'] = productSort.value.split('-');
+      if (isSortBy(by) && isSortOrder(order)) actions.sort(by, order);
+      else actions.sort('default');
     });
-    app.querySelector('.clear-catalog-filters').addEventListener('click', () => {
+    required<HTMLButtonElement>(app, '.clear-catalog-filters').addEventListener('click', () => {
       history.replaceState(null, '', '#products');
       actions.reset();
     });
     renderCatalogPage(model);
   }
 
-  function renderCatalogPage(model) {
+  function renderCatalogPage(model: ShopModel): void {
     const grid = app.querySelector('.catalog-product-grid');
     if (!grid) return;
     grid.innerHTML = model.results.length
@@ -173,9 +208,9 @@ export function createShopPage({ products, categories }) {
       history.replaceState(null, '', '#products');
       actions.reset();
     });
-    app.querySelector('#product-search').value = model.catalog.query;
-    app.querySelector('#product-sort').value = sortValue(model.catalog);
-    app.querySelector('#products-count').textContent =
+    required<HTMLInputElement>(app, '#product-search').value = model.catalog.query;
+    required<HTMLSelectElement>(app, '#product-sort').value = sortValue(model.catalog);
+    required<HTMLElement>(app, '#products-count').textContent =
       `Showing ${model.results.length} ${model.results.length === 1 ? 'find' : 'finds'}`;
     const filters = [];
     if (model.catalog.category)
@@ -185,10 +220,10 @@ export function createShopPage({ products, categories }) {
     if (model.catalog.query) filters.push(`Search: “${model.catalog.query}”`);
     if (model.catalog.minPrice !== null) filters.push(`From ${money(model.catalog.minPrice)}`);
     if (model.catalog.maxPrice !== null) filters.push(`Up to ${money(model.catalog.maxPrice)}`);
-    const summary = app.querySelector('.active-filters');
+    const summary = required<HTMLElement>(app, '.active-filters');
     summary.hidden = filters.length === 0;
-    app.querySelector('.active-filter-copy').textContent = filters.join(' · ');
-    app.querySelectorAll('[data-catalog-category]').forEach((link) => {
+    required<HTMLElement>(app, '.active-filter-copy').textContent = filters.join(' · ');
+    app.querySelectorAll<HTMLElement>('[data-catalog-category]').forEach((link) => {
       const active = link.dataset.catalogCategory === model.catalog.category;
       link.classList.toggle('is-active', active);
       if (active) link.setAttribute('aria-current', 'true');
@@ -196,7 +231,7 @@ export function createShopPage({ products, categories }) {
     });
   }
 
-  function updateCatalog(model) {
+  function updateCatalog(model: ShopModel): void {
     currentModel = model;
     if (location.hash === '#login' || location.hash === '#signup') {
       location.hash = 'products';
@@ -206,7 +241,7 @@ export function createShopPage({ products, categories }) {
     else if (app.querySelector('.shop-content')) renderHomeProducts(model);
   }
 
-  function authPage(mode) {
+  function authPage(mode: string): void {
     const signup = mode === 'signup';
     app.innerHTML = `${header(0, true)}<main id="main-content" class="auth-main" tabindex="-1"><section class="auth-layout" aria-labelledby="auth-title">
       <aside class="auth-story"><div class="auth-story-image">${photo(950, 98, 722, 271)}</div><div class="auth-story-copy"><p class="eyebrow">A LITTLE MORE THOUGHTFUL</p><h2>Good things.<br/>Everyday moments.</h2><p>A home that feels like you. A workspace that inspires you. Find the little things that make a difference.</p><span class="auth-story-signature">Thoughtfully yours, <span>ShopBoard.</span></span></div></aside>
@@ -219,13 +254,14 @@ export function createShopPage({ products, categories }) {
       <button type="submit" class="button button-green auth-submit">${signup ? 'Create your account' : 'Log in'} ${icon('arrow')}</button><p class="auth-status" role="status" hidden></p>
       <p class="auth-demo-note">Account access is coming soon. This preview does not save or send your details.</p></form>
       <p class="auth-switch">${signup ? 'Already feel at home here?' : 'New to ShopBoard?'} <a href="#${signup ? 'login' : 'signup'}">${signup ? 'Log in' : 'Create an account'} →</a></p></div></div></section></main>${footer(true)}`;
-    const password = app.querySelector('#auth-password');
-    const confirm = app.querySelector('#confirm-password');
-    app.querySelector('.password-toggle').addEventListener('click', (event) => {
+    const password = required<HTMLInputElement>(app, '#auth-password');
+    const confirm = app.querySelector<HTMLInputElement>('#confirm-password');
+    const passwordToggle = required<HTMLButtonElement>(app, '.password-toggle');
+    passwordToggle.addEventListener('click', () => {
       const show = password.type === 'password';
       password.type = show ? 'text' : 'password';
-      event.currentTarget.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
-      event.currentTarget.setAttribute('aria-pressed', String(show));
+      passwordToggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      passwordToggle.setAttribute('aria-pressed', String(show));
     });
     if (confirm) {
       const validate = () =>
@@ -235,93 +271,103 @@ export function createShopPage({ products, categories }) {
       confirm.addEventListener('input', validate);
       password.addEventListener('input', validate);
     }
-    app.querySelector('.auth-form').addEventListener('submit', (event) => {
+    required<HTMLFormElement>(app, '.auth-form').addEventListener('submit', (event) => {
       event.preventDefault();
-      const status = app.querySelector('.auth-status');
+      const status = required<HTMLElement>(app, '.auth-status');
       status.hidden = false;
       status.textContent = `${signup ? 'Your signup form is ready.' : 'Your login form is ready.'} Account ${signup ? 'creation' : 'sign-in'} will be available when the authentication service is connected. No details have been sent or saved.`;
     });
     bindInfoLinks();
   }
 
-  function renderCart(snapshot) {
+  function renderCart(snapshot: CartSnapshot): void {
     const { items, count, subtotal } = snapshot;
     cartDialog.innerHTML = `<div class="dialog-heading"><div><p class="eyebrow">YOUR GOOD FINDS</p><h2 id="cart-title">Your shopping bag <span>(${count})</span></h2></div><button class="icon-button close-dialog" type="button" aria-label="Close shopping bag">${icon('close')}</button></div>
       ${items.length ? `<div class="cart-items">${items.map(cartItem).join('')}</div><div class="cart-total"><span>Subtotal</span><strong>${money(subtotal)}</strong></div><button type="button" class="text-button clear-cart">Clear shopping bag</button><p class="cart-note">This is a preview shop. Checkout and payment are not available yet.</p>` : `<div class="empty-bag">${icon('cart')}<h3>A little room for good things.</h3><p>Your bag is empty. Find something worth keeping.</p></div>`}
       <button type="button" class="button button-green continue-shopping">Continue exploring ${icon('arrow')}</button>`;
-    cartDialog.querySelector('.close-dialog').addEventListener('click', () => cartDialog.close());
-    cartDialog
-      .querySelector('.continue-shopping')
-      .addEventListener('click', () => cartDialog.close());
-    cartDialog.querySelectorAll('[data-quantity]').forEach((button) =>
+    required<HTMLButtonElement>(cartDialog, '.close-dialog').addEventListener('click', () =>
+      cartDialog.close(),
+    );
+    required<HTMLButtonElement>(cartDialog, '.continue-shopping').addEventListener('click', () =>
+      cartDialog.close(),
+    );
+    cartDialog.querySelectorAll<HTMLButtonElement>('[data-quantity]').forEach((button) =>
       button.addEventListener('click', () => {
-        actions.changeCart(button.dataset.quantity, Number(button.dataset.delta));
-        (
-          cartDialog.querySelector(
-            `[data-quantity="${button.dataset.quantity}"][data-delta="${button.dataset.delta}"]`,
-          ) || cartDialog.querySelector('.close-dialog')
-        ).focus();
+        const id = button.dataset.quantity;
+        const delta = Number(button.dataset.delta);
+        if (!id) return;
+        actions.changeCart(id, delta);
+        const replacement = cartDialog.querySelector<HTMLButtonElement>(
+          `[data-quantity="${id}"][data-delta="${button.dataset.delta}"]`,
+        );
+        (replacement ?? required<HTMLButtonElement>(cartDialog, '.close-dialog')).focus();
       }),
     );
-    cartDialog.querySelectorAll('[data-remove]').forEach((button) =>
+    cartDialog.querySelectorAll<HTMLButtonElement>('[data-remove]').forEach((button) =>
       button.addEventListener('click', () => {
-        actions.removeFromCart(button.dataset.remove);
-        cartDialog.querySelector('.close-dialog').focus();
+        const id = button.dataset.remove;
+        if (!id) return;
+        actions.removeFromCart(id);
+        required<HTMLButtonElement>(cartDialog, '.close-dialog').focus();
       }),
     );
-    cartDialog.querySelector('.clear-cart')?.addEventListener('click', () => {
+    cartDialog.querySelector<HTMLButtonElement>('.clear-cart')?.addEventListener('click', () => {
       actions.clearCart();
-      cartDialog.querySelector('.close-dialog').focus();
+      required<HTMLButtonElement>(cartDialog, '.close-dialog').focus();
     });
   }
 
-  function syncCart(snapshot) {
+  function syncCart(snapshot: CartSnapshot): void {
     if (currentModel) currentModel = { ...currentModel, cart: snapshot };
-    const badge = app.querySelector('.cart-count');
-    if (badge) badge.textContent = snapshot.count;
+    const badge = app.querySelector<HTMLElement>('.cart-count');
+    if (badge) badge.textContent = String(snapshot.count);
     app
       .querySelector('.cart-toggle')
       ?.setAttribute('aria-label', `Open shopping bag, ${snapshot.count} items`);
   }
 
-  function bindShopChrome() {
-    app.querySelector('.cart-toggle').addEventListener('click', () => {
-      renderCart(currentModel.cart);
+  function bindShopChrome(): void {
+    required<HTMLButtonElement>(app, '.cart-toggle').addEventListener('click', () => {
+      renderCart(getCurrentModel().cart);
       cartDialog.showModal();
     });
-    app.querySelector('.search-form').addEventListener('submit', (event) => {
+    required<HTMLFormElement>(app, '.search-form').addEventListener('submit', (event) => {
       event.preventDefault();
-      const query = app.querySelector('#global-product-search').value;
+      const query = required<HTMLInputElement>(app, '#global-product-search').value;
       actions.search(query);
       if (location.hash !== '#products') location.hash = 'products';
     });
   }
 
-  function bindInfoLinks() {
-    app.querySelectorAll('[data-info]').forEach((button) =>
+  function bindInfoLinks(): void {
+    app.querySelectorAll<HTMLButtonElement>('[data-info]').forEach((button) =>
       button.addEventListener('click', () => {
         const title = button.dataset.info;
+        if (!isInformationTitle(title)) return;
         infoDialog.innerHTML = `<div class="dialog-heading"><h2 id="info-title">${title}</h2><button class="icon-button" type="button" aria-label="Close">${icon('close')}</button></div><p class="info-copy">${information[title]}</p>`;
-        infoDialog.querySelector('button').addEventListener('click', () => infoDialog.close());
+        required<HTMLButtonElement>(infoDialog, 'button').addEventListener('click', () =>
+          infoDialog.close(),
+        );
         infoDialog.showModal();
       }),
     );
   }
 
-  function bindAddButtons(root) {
-    root
-      .querySelectorAll('[data-product]')
-      .forEach((button) =>
-        button.addEventListener('click', () => actions.addToCart(button.dataset.product)),
-      );
+  function bindAddButtons(root: ParentNode): void {
+    root.querySelectorAll<HTMLButtonElement>('[data-product]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const id = button.dataset.product;
+        if (id) actions.addToCart(id);
+      });
+    });
   }
 
-  function clearFilters() {
+  function clearFilters(): void {
     actions.reset();
     if (location.hash !== '#home') location.hash = 'home';
   }
 
-  function installConsoleApi(api) {
+  function installConsoleApi(api: ConsoleApi): void {
     window.shop = api;
     console.info(
       '%c ShopBoard Console API Available \n' +
@@ -336,8 +382,7 @@ export function createShopPage({ products, categories }) {
     );
   }
 
-  function showToast(message) {
-    const toast = document.querySelector('#toast');
+  function showToast(message: string): void {
     clearTimeout(toastTimer);
     toast.textContent = message;
     toast.classList.add('is-visible');
@@ -356,50 +401,71 @@ export function createShopPage({ products, categories }) {
   });
 }
 
-function header(cartCount, auth = false) {
+function header(cartCount: number, auth = false): string {
   return `<div class="announcement">${icon('leaf')}<span>Thoughtfully chosen for a better everyday.<span class="announcement-extra"> &nbsp; A little less ordinary.</span></span></div>
     <header class="site-header"><div class="container header-inner"><a class="logo" href="#home" aria-label="ShopBoard home">ShopBoard<span class="logo-dot">.</span></a>
     ${auth ? '<a class="back-to-shop" href="#home">Back to the shop <span aria-hidden="true">↗</span></a>' : `<form class="search-form" role="search"><label class="visually-hidden" for="global-product-search">Search products</label>${icon('search')}<input id="global-product-search" name="q" type="search" placeholder="Search for something good…" autocomplete="off"/><button class="visually-hidden" type="submit">Search</button></form><nav class="main-nav" aria-label="Main navigation"><a href="#home" data-nav="home">Home</a><a href="#products" data-nav="products">Products</a><a href="#category/lifestyle" data-nav="lifestyle">Lifestyle</a><a href="#category/workspace" data-nav="workspace">Workspace</a><a href="#category/gifts" data-nav="gifts">Gifts</a></nav><div class="header-actions"><a class="icon-button account-link" href="#login" aria-label="Log in or create an account">${icon('user')}</a><button class="icon-button cart-toggle" type="button" aria-label="Open shopping bag, ${cartCount} items">${icon('cart')}<span class="cart-count">${cartCount}</span></button></div>`}</div></header>`;
 }
 
-function footer(auth = false) {
+function footer(auth = false): string {
   const links = auth
     ? ['About', 'Contact', 'Privacy']
     : ['About', 'Contact', 'Shipping', 'Returns', 'FAQs'];
   return `<footer class="site-footer"><div class="container footer-inner"><div><a class="logo footer-logo" href="#home">ShopBoard<span class="logo-dot">.</span></a><p class="copyright">© ${new Date().getFullYear()} ShopBoard. A considered everyday.</p></div><nav aria-label="Footer navigation">${links.map((label) => `<button type="button" class="text-button" data-info="${label}">${label}</button>`).join('')}</nav><span class="footer-note">A little more thoughtful. ${icon('leaf')}</span></div></footer>`;
 }
 
-function homeProductCard(product) {
+function homeProductCard(product: Product): string {
   return `<article class="product-card" data-product-card="${product.id}"><div class="product-image" role="img" aria-label="${product.name}">${photo(...product.image)}</div><div class="product-details"><div><h3>${product.name}</h3><p class="price">${money(product.price)}</p></div><button class="add-to-cart" type="button" data-product="${product.id}" aria-label="Add ${product.name} to bag">${icon('cart')}</button></div></article>`;
 }
 
-function productCard(product) {
+function productCard(product: Product): string {
   return `<article class="product-card" data-product-card="${product.id}"><div class="product-image" role="img" aria-label="${product.name}">${photo(...product.image)}</div><div class="product-details"><div><h2>${product.name}</h2><p class="price">${money(product.price)}</p></div><button class="add-to-cart" type="button" data-product="${product.id}" aria-label="Add ${product.name} to bag">${icon('cart')}</button></div></article>`;
 }
 
-function cartItem(product) {
+function cartItem(product: CartItem): string {
   return `<article class="cart-item"><div class="cart-image">${photo(...product.image)}</div><div class="cart-item-info"><h3>${product.name}</h3><p>${money(product.price)}</p><div class="quantity-controls"><button type="button" data-quantity="${product.id}" data-delta="-1" aria-label="Decrease ${product.name} quantity">−</button><span aria-label="Quantity">${product.quantity}</span><button type="button" data-quantity="${product.id}" data-delta="1" aria-label="Increase ${product.name} quantity" ${product.quantity >= 99 ? 'disabled' : ''}>+</button></div></div><button type="button" class="text-button remove-item" data-remove="${product.id}" aria-label="Remove ${product.name}">${icon('close')}</button></article>`;
 }
 
-function sortValue(state) {
+function sortValue(state: CatalogState): string {
   return state.sortBy === 'default' ? 'default' : `${state.sortBy}-${state.sortOrder}`;
 }
 
-function categoryCounts(products, categories) {
-  const counts = { all: products.length };
+function categoryCounts(
+  products: readonly Product[],
+  categories: readonly Category[],
+): Record<string, number> {
+  const counts: Record<string, number> = { all: products.length };
   for (const category of categories) {
     counts[category.id] = products.filter((product) => product.category === category.id).length;
   }
   return counts;
 }
 
-function syncActiveNavigation(category) {
-  document.querySelectorAll('[data-category]').forEach((link) => {
+function syncActiveNavigation(category: string): void {
+  document.querySelectorAll<HTMLElement>('[data-category]').forEach((link) => {
     if (link.dataset.category === category) link.setAttribute('aria-current', 'true');
     else link.removeAttribute('aria-current');
   });
-  document.querySelectorAll('[data-nav]').forEach((link) => {
+  document.querySelectorAll<HTMLElement>('[data-nav]').forEach((link) => {
     if (link.dataset.nav === (category || 'home')) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
   });
+}
+
+function required<ElementType extends Element>(root: ParentNode, selector: string): ElementType {
+  const element = root.querySelector<ElementType>(selector);
+  if (!element) throw new Error(`Required element not found: ${selector}`);
+  return element;
+}
+
+function isSortBy(value: string): value is SortBy {
+  return value === 'default' || value === 'price' || value === 'name';
+}
+
+function isSortOrder(value: string): value is SortOrder {
+  return value === 'asc' || value === 'desc';
+}
+
+function isInformationTitle(value: string | undefined): value is InformationTitle {
+  return value !== undefined && Object.hasOwn(information, value);
 }

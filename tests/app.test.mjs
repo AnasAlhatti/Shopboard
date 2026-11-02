@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createApp } from '../src/app.js';
+import { createApp } from '../src/app.ts';
 
 const calls = { add: 0, syncCart: 0, render: 0, installed: 0, connected: 0 };
 const cartSnapshot = { items: [{ id: 'mug', quantity: 1 }], count: 1, subtotal: 18 };

@@ -3,7 +3,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const sourceRoot = path.resolve('src');
-const allowedDomFile = path.normalize('src/page/shop-page.js');
+const allowedDomFile = path.normalize('src/page/shop-page.ts');
 const domTokens = [
   /\bdocument\b/,
   /\bwindow\b/,
@@ -17,20 +17,20 @@ const domTokens = [
   /\.close\s*\(/,
 ];
 
-async function javascriptFiles(directory) {
+async function typescriptFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const nested = await Promise.all(
     entries.map((entry) => {
       const target = path.join(directory, entry.name);
-      if (entry.isDirectory()) return javascriptFiles(target);
-      return entry.name.endsWith('.js') ? [target] : [];
+      if (entry.isDirectory()) return typescriptFiles(target);
+      return entry.name.endsWith('.ts') ? [target] : [];
     }),
   );
   return nested.flat();
 }
 
 const violations = [];
-for (const file of await javascriptFiles(sourceRoot)) {
+for (const file of await typescriptFiles(sourceRoot)) {
   const relative = path.normalize(path.relative(process.cwd(), file));
   if (relative === allowedDomFile) continue;
   const source = await readFile(file, 'utf8');

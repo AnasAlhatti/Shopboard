@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { products, categories } from '../src/data/catalog-data.js';
-import { createCatalogStore } from '../src/catalog/catalog-store.js';
+import { products, categories } from '../src/data/catalog-data.ts';
+import { createCatalogStore } from '../src/catalog/catalog-store.ts';
 
 const originalOrder = ['mug', 'planter', 'blanket', 'bottle', 'journal', 'tray'];
 const catalog = createCatalogStore(products, categories);

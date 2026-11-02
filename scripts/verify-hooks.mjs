@@ -57,25 +57,31 @@ check(
   runNode(path.join(project, 'node_modules/husky', huskyPackage.bin.husky)),
   'Install real Husky hook',
 );
-await writeFile(path.join(fixture, 'src/fixture.js'), 'export const answer={value:42}\n');
+await writeFile(
+  path.join(fixture, 'src/fixture.ts'),
+  'export const answer:{value:number}={value:42}\n',
+);
 check(git('add', '.'), 'Stage deliberately unformatted fixture');
 const formattedCommit = git('commit', '-m', 'Verify automatic formatting');
 check(formattedCommit, 'Pre-commit should fix formatting and allow valid code');
-assert.match(git('show', 'HEAD:src/fixture.js').stdout, /export const answer = \{ value: 42 \};/);
+assert.match(
+  git('show', 'HEAD:src/fixture.ts').stdout,
+  /export const answer: \{ value: number \} = \{ value: 42 \};/,
+);
 console.log('PASS real pre-commit hook: bad formatting was fixed in the committed file');
 const before = git('rev-parse', 'HEAD').stdout.trim();
-await writeFile(path.join(fixture, 'src/fixture.js'), 'export const answer = missingValue;\n');
-check(git('add', 'src/fixture.js'), 'Stage deliberate lint error');
+await writeFile(path.join(fixture, 'src/fixture.ts'), 'export const answer: any = 42;\n');
+check(git('add', 'src/fixture.ts'), 'Stage deliberate lint error');
 const blockedCommit = git('commit', '-m', 'This commit must be blocked');
 assert.notEqual(blockedCommit.status, 0, 'A lint error must reject the commit');
-assert.match(`${blockedCommit.stdout}\n${blockedCommit.stderr}`, /no-undef/);
+assert.match(`${blockedCommit.stdout}\n${blockedCommit.stderr}`, /no-explicit-any/);
 assert.equal(
   git('rev-parse', 'HEAD').stdout.trim(),
   before,
   'Rejected commit must not change HEAD',
 );
 console.log(
-  'PASS real pre-commit hook: ESLint no-undef blocked the commit and HEAD did not change',
+  'PASS real pre-commit hook: ESLint no-explicit-any blocked the commit and HEAD did not change',
 );
 await writeFile(
   path.join(output, 'hook-results.json'),
