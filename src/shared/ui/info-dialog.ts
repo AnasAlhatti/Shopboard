@@ -1,5 +1,5 @@
-import { icon } from '../shared/presentation.ts';
-import { required } from './dom.ts';
+import { icon } from '../presentation.ts';
+import { required } from '../dom.ts';
 
 const information = {
   About:

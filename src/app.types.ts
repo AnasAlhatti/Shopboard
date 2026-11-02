@@ -1,13 +1,19 @@
-import type { CartSnapshot } from './cart/cart-store.ts';
-import type { CatalogFilter, CatalogState, SortBy, SortOrder } from './catalog/catalog-store.ts';
-import type { Category, Product } from './data/catalog-data.ts';
+import type { Cart } from './modules/cart/cart.types.ts';
+import type {
+  CatalogFilter,
+  CatalogState,
+  SortBy,
+  SortOrder,
+  Category,
+  Product,
+} from './modules/products/products.types.ts';
 
 export interface ShopModel {
   readonly products: readonly Product[];
   readonly categories: readonly Category[];
   readonly catalog: CatalogState;
   readonly results: readonly Product[];
-  readonly cart: CartSnapshot;
+  readonly cart: Cart;
 }
 
 export interface ShopActions {
@@ -16,10 +22,10 @@ export interface ShopActions {
   filter(criteria?: CatalogFilter): Product[];
   sort(by: SortBy, order?: SortOrder): Product[];
   reset(): Product[];
-  addToCart(id: string): CartSnapshot;
-  changeCart(id: string, delta: number): CartSnapshot;
-  removeFromCart(id: string): CartSnapshot;
-  clearCart(): CartSnapshot;
+  addToCart(id: string): Cart;
+  changeCart(id: string, delta: number): Cart;
+  removeFromCart(id: string): Cart;
+  clearCart(): Cart;
 }
 
 export interface ConsoleApi {
@@ -37,8 +43,8 @@ export interface ShopPage {
   start(): void;
   render(model: ShopModel): void;
   updateCatalog(model: ShopModel): void;
-  renderCart(snapshot: CartSnapshot): void;
-  syncCart(snapshot: CartSnapshot): void;
+  renderCart(snapshot: Cart): void;
+  syncCart(snapshot: Cart): void;
   showToast(message: string): void;
   installConsoleApi(api: ConsoleApi): void;
 }

@@ -1,13 +1,13 @@
-import type { CartSnapshot } from '../cart/cart-store.ts';
-import type { Category, Product } from '../data/catalog-data.ts';
-import type { ShopActions, ShopModel, ShopPage } from '../types.ts';
-import { createAuthView } from './auth-view.ts';
-import { createCartDialog } from './cart-dialog.ts';
-import { createCatalogView } from './catalog-view.ts';
-import { installConsoleApi, createToast } from './browser.ts';
-import { required, dismissOnBackdrop } from './dom.ts';
-import { createHomeView } from './home-view.ts';
-import { createInfoDialog } from './info-dialog.ts';
+import type { Cart } from '../modules/cart/cart.types.ts';
+import type { Category, Product } from '../modules/products/products.types.ts';
+import type { ShopActions, ShopModel, ShopPage } from '../app.types.ts';
+import { createAuthView } from '../modules/auth/auth.ui.ts';
+import { createCartDialog } from '../modules/cart/cart.ui.ts';
+import { createProductsView } from '../modules/products/products.ui.ts';
+import { installConsoleApi } from './console-api.ts';
+import { createToast } from '../shared/ui/toast.ts';
+import { required, dismissOnBackdrop } from '../shared/dom.ts';
+import { createInfoDialog } from '../shared/ui/info-dialog.ts';
 import { createShopChrome } from './layout.ts';
 
 interface PageDependencies {
@@ -41,12 +41,13 @@ export function createShopPage({ products, categories }: PageDependencies): Shop
       bindShopChrome: chrome.bind,
       bindInfoLinks: bindInfo,
     };
+    const productsView = createProductsView(collection);
     return {
       actions,
       cart,
       chrome,
-      home: createHomeView(collection),
-      catalog: createCatalogView(collection),
+      home: productsView.home,
+      catalog: productsView.catalog,
       auth: createAuthView(app, bindInfo),
     };
   }
@@ -88,7 +89,7 @@ export function createShopPage({ products, categories }: PageDependencies): Shop
     else if (app.querySelector('.shop-content')) views.home.update(model);
   }
 
-  function syncCart(snapshot: CartSnapshot): void {
+  function syncCart(snapshot: Cart): void {
     if (currentModel) currentModel = { ...currentModel, cart: snapshot };
     getConnection().chrome.sync(snapshot);
   }
@@ -108,7 +109,7 @@ export function createShopPage({ products, categories }: PageDependencies): Shop
     render,
     updateCatalog,
     syncCart,
-    renderCart: (snapshot: CartSnapshot) => getConnection().cart.render(snapshot),
+    renderCart: (snapshot: Cart) => getConnection().cart.render(snapshot),
     showToast: toast.show,
     installConsoleApi,
   });

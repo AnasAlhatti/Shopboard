@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createCartStore } from '../src/cart/cart-store.ts';
+import { createCartStore } from '../src/modules/cart/cart.logic.ts';
 
 const products = [
   { id: 'mug', price: 18 },

@@ -1,7 +1,7 @@
-import type { CartStore } from './cart/cart-store.ts';
-import type { CatalogStore } from './catalog/catalog-store.ts';
-import type { Product } from './data/catalog-data.ts';
-import type { ConsoleApi, ShopActions, ShopModel, ShopPage } from './types.ts';
+import type { CartStore } from './modules/cart/cart.types.ts';
+import type { CatalogStore } from './modules/products/products.types.ts';
+import type { Product } from './modules/products/products.types.ts';
+import type { ConsoleApi, ShopActions, ShopModel, ShopPage } from './app.types.ts';
 
 interface AppDependencies {
   catalog: CatalogStore;

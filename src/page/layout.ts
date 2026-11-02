@@ -1,7 +1,7 @@
 import { icon } from '../shared/presentation.ts';
-import type { CartSnapshot } from '../cart/cart-store.ts';
-import type { ShopActions } from '../types.ts';
-import { required } from './dom.ts';
+import type { Cart } from '../modules/cart/cart.types.ts';
+import type { ShopActions } from '../app.types.ts';
+import { required } from '../shared/dom.ts';
 
 export function header(cartCount: number, auth = false): string {
   return `<div class="announcement">${icon('leaf')}<span>Thoughtfully chosen for a better everyday.<span class="announcement-extra"> &nbsp; A little less ordinary.</span></span></div>
@@ -36,7 +36,7 @@ export function createShopChrome(app: HTMLElement, actions: ShopActions, openCar
       if (location.hash !== '#products') location.hash = 'products';
     });
   }
-  function sync(snapshot: CartSnapshot): void {
+  function sync(snapshot: Cart): void {
     const badge = app.querySelector<HTMLElement>('.cart-count');
     if (badge) badge.textContent = String(snapshot.count);
     app

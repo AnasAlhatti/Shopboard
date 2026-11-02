@@ -1,14 +1,4 @@
-import type { StorageAdapter } from '../cart/cart-store.ts';
-import type { ConsoleApi } from '../types.ts';
-
-export const browserStorage: StorageAdapter = {
-  getItem(key) {
-    return globalThis.localStorage.getItem(key);
-  },
-  setItem(key, value) {
-    globalThis.localStorage.setItem(key, value);
-  },
-};
+import type { ConsoleApi } from '../app.types.ts';
 
 declare global {
   interface Window {
@@ -29,15 +19,4 @@ export function installConsoleApi(api: ConsoleApi): void {
       '  - shop.products                   -> Full products catalog',
     'font-weight: bold; color: #203f33;',
   );
-}
-
-export function createToast(toast: HTMLElement) {
-  let toastTimer: ReturnType<typeof setTimeout> | undefined;
-  function showToast(message: string): void {
-    clearTimeout(toastTimer);
-    toast.textContent = message;
-    toast.classList.add('is-visible');
-    toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 3000);
-  }
-  return { show: showToast };
 }

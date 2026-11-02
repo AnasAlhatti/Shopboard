@@ -1,6 +1,6 @@
-import { icon, photo } from '../shared/presentation.ts';
-import { header, footer } from './layout.ts';
-import { required } from './dom.ts';
+import { icon, photo } from '../../shared/presentation.ts';
+import { header, footer } from '../../page/layout.ts';
+import { required } from '../../shared/dom.ts';
 
 export function createAuthView(app: HTMLElement, bindInfoLinks: () => void) {
   function authPage(mode: string): void {

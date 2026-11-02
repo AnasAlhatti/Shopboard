@@ -5,6 +5,17 @@ import ts from 'typescript';
 
 const sourceRoot = path.resolve('src');
 const pageRoot = path.join(sourceRoot, 'page') + path.sep;
+const sharedRoot = path.join(sourceRoot, 'shared') + path.sep;
+const modulesRoot = path.join(sourceRoot, 'modules') + path.sep;
+const isFeatureUi = (file) => file.startsWith(modulesRoot) && file.endsWith('.ui.ts');
+const isUi = (file) =>
+  file.startsWith(pageRoot) ||
+  isFeatureUi(file) ||
+  file.startsWith(path.join(sharedRoot, 'ui') + path.sep) ||
+  file === path.join(sharedRoot, 'dom.ts');
+const isStorage = (file) => file.endsWith('.storage.ts');
+const featureName = (file) =>
+  file.startsWith(modulesRoot) ? path.relative(modulesRoot, file).split(path.sep)[0] : undefined;
 const domTokens = [
   /\bdocument\b/,
   /\bwindow\b/,
@@ -40,8 +51,13 @@ for (const file of files) {
   if (file.endsWith('.js'))
     violations.push(`${relative(file)}: production code must use TypeScript`);
   const source = await readFile(file, 'utf8');
-  if (!file.startsWith(pageRoot) && domTokens.some((token) => token.test(source))) {
-    violations.push(`${relative(file)}: browser/DOM access belongs in src/page`);
+  const forbiddenTokens = isStorage(file)
+    ? domTokens.filter((token) => token.source !== '\\blocalStorage\\b')
+    : domTokens;
+  if (!isUi(file) && forbiddenTokens.some((token) => token.test(source))) {
+    violations.push(
+      `${relative(file)}: DOM access belongs in feature UI, the page shell, or shared UI`,
+    );
   }
   const parsed = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
   const dependencies = [];
@@ -52,22 +68,35 @@ for (const file of files) {
     const target = path.resolve(path.dirname(file), specifier.text.replace(/\.js$/, '.ts'));
     if (!knownFiles.has(target)) continue;
     dependencies.push(target);
+    const typeOnly = ts.isImportDeclaration(statement) && statement.importClause?.isTypeOnly;
     if (
-      file !== path.join(sourceRoot, 'main.ts') &&
-      !file.startsWith(pageRoot) &&
-      target.startsWith(pageRoot)
-    ) {
-      violations.push(`${relative(file)}: domain/application modules cannot import the page layer`);
-    }
-    if (
-      file.startsWith(pageRoot) &&
-      ['cart', 'catalog'].some(
-        (feature) => target === path.join(sourceRoot, feature, `${feature}-store.ts`),
-      ) &&
-      !statement.importClause?.isTypeOnly
+      file.startsWith(sharedRoot) &&
+      (target.startsWith(modulesRoot) ||
+        target.startsWith(pageRoot) ||
+        target === path.join(sourceRoot, 'app.types.ts'))
     ) {
       violations.push(
-        `${relative(file)}: views receive actions; import store contracts with import type`,
+        `${relative(file)}: shared code cannot depend on features or the application shell`,
+      );
+    }
+    if (!isUi(file) && file !== path.join(sourceRoot, 'main.ts') && isUi(target)) {
+      violations.push(`${relative(file)}: logic and domain types cannot import UI modules`);
+    }
+    if (isUi(file) && /\.(logic|storage)\.ts$/.test(target) && !typeOnly) {
+      violations.push(
+        `${relative(file)}: UI receives actions and snapshots instead of importing feature logic or storage`,
+      );
+    }
+    const owner = featureName(file);
+    const dependencyOwner = featureName(target);
+    if (
+      owner &&
+      dependencyOwner &&
+      owner !== dependencyOwner &&
+      !(typeOnly && target.endsWith('.types.ts'))
+    ) {
+      violations.push(
+        `${relative(file)}: cross-feature coordination belongs in app.ts; only type contracts may be shared directly`,
       );
     }
   }
@@ -91,5 +120,5 @@ for (const file of files) visit(file);
 
 assert.deepEqual(violations, [], violations.join('\n'));
 console.log(
-  'PASS architecture: TypeScript source, page-only DOM access, dependency direction, no circular imports',
+  'PASS architecture: TypeScript source, feature ownership, UI/domain separation, shared-code independence, no circular imports',
 );

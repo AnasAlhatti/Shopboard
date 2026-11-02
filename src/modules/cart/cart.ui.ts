@@ -1,10 +1,9 @@
-import { icon, money, photo } from '../shared/presentation.ts';
-import type { CartItem, CartSnapshot } from '../cart/cart-store.ts';
-import type { ShopActions } from '../types.ts';
-import { required } from './dom.ts';
+import { icon, money, photo } from '../../shared/presentation.ts';
+import type { CartItem, Cart, CartActions } from './cart.types.ts';
+import { required } from '../../shared/dom.ts';
 
-export function createCartDialog(cartDialog: HTMLDialogElement, actions: ShopActions) {
-  function renderCart(snapshot: CartSnapshot): void {
+export function createCartDialog(cartDialog: HTMLDialogElement, actions: CartActions) {
+  function renderCart(snapshot: Cart): void {
     const { items, count, subtotal } = snapshot;
     cartDialog.innerHTML = `<div class="dialog-heading"><div><p class="eyebrow">YOUR GOOD FINDS</p><h2 id="cart-title">Your shopping bag <span>(${count})</span></h2></div><button class="icon-button close-dialog" type="button" aria-label="Close shopping bag">${icon('close')}</button></div>
     ${items.length ? `<div class="cart-items">${items.map(cartItem).join('')}</div><div class="cart-total"><span>Subtotal</span><strong>${money(subtotal)}</strong></div><button type="button" class="text-button clear-cart">Clear shopping bag</button><p class="cart-note">This is a preview shop. Checkout and payment are not available yet.</p>` : `<div class="empty-bag">${icon('cart')}<h3>A little room for good things.</h3><p>Your bag is empty. Find something worth keeping.</p></div>`}
@@ -42,7 +41,7 @@ export function createCartDialog(cartDialog: HTMLDialogElement, actions: ShopAct
   }
   return {
     render: renderCart,
-    open(snapshot: CartSnapshot) {
+    open(snapshot: Cart) {
       renderCart(snapshot);
       cartDialog.showModal();
     },
