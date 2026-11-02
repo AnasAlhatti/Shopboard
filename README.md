@@ -27,9 +27,9 @@ with development dependencies installed.
 | `npm run lint`                | Run ESLint; errors or warnings fail the check                                      |
 | `npm run lint:fix`            | Apply available ESLint fixes                                                       |
 | `npm run typecheck`           | Run strict TypeScript checks without emitting files                                |
-| `npm run check`               | Check formatting, types, lint, and the production build                            |
+| `npm run check`               | Check formatting, types, lint, architecture, and the production build              |
 | `npm run test`                | Run the catalog, cart, and app coordination tests                                  |
-| `npm run verify:architecture` | Confirm that only the page adapter touches the DOM                                 |
+| `npm run verify:architecture` | Enforce module dependency direction and reject circular imports                    |
 | `npm run verify:part1`        | Run the complete Part 1 browser acceptance checks                                  |
 | `npm run verify:hooks`        | Verify real successful and rejected commits in an isolated test repository         |
 | `npm run verify:ui`           | Build, check responsive layouts and forms, and run Lighthouse accessibility audits |
@@ -72,9 +72,19 @@ Screenshots, HTML/JSON Lighthouse reports, and hook-test evidence are saved unde
 - `src/data/catalog-data.ts` owns the product/category types and immutable shop data.
 - `src/catalog/catalog-store.ts` owns DOM-free search, filtering, sorting, and catalog state.
 - `src/cart/cart-store.ts` owns the cart types, DOM-free quantities, totals, validation, and persistence.
-- `src/page/shop-page.ts` is the only production file that reads or changes the DOM and browser page state.
+- `src/page/shop-page.ts` coordinates routes and assembles the page modules.
+- `src/page/home-view.ts` owns the home markup, newsletter form, and stable product filtering.
+- `src/page/catalog-view.ts` owns the collection markup, filters, sorting controls, and results.
+- `src/page/auth-view.ts` owns account markup, password visibility, and form validation.
+- `src/page/cart-dialog.ts` owns shopping bag markup, quantity controls, and dialog focus.
+- `src/page/info-dialog.ts` owns informational content and its dialog.
+- `src/page/layout.ts` owns the shared header/footer, navigation state, and header interactions.
+- `src/page/product-card.ts` supplies shared product card markup.
+- `src/page/catalog-interactions.ts` shares collection view options and product/filter actions.
+- `src/page/dom.ts` supplies required-element queries and dialog backdrop dismissal.
+- `src/page/browser.ts` owns browser storage access, toast notifications, and the console bridge.
 - `src/shared/presentation.ts` formats icons, sprite-backed images, and currency as pure values.
-- `src/style.css` contains every responsive visual rule for the storefront, catalog, dialogs, and account pages.
+- `src/style.css` imports ordered style modules from `src/styles/`; feature styles and responsive overrides are kept in separate files.
 
 ### Test files
 
@@ -85,12 +95,27 @@ Screenshots, HTML/JSON Lighthouse reports, and hook-test evidence are saved unde
 ### Verification files
 
 - `scripts/verify-part1.mjs` runs the complete Part 1 behavior checklist in a real browser.
-- `scripts/verify-architecture.mjs` fails if any production file other than `shop-page.ts` touches the DOM.
+- `scripts/verify-architecture.mjs` enforces TypeScript sources, DOM access inside `src/page/`, dependency direction, and no circular imports.
 - `scripts/verify-ui.mjs` checks routes, forms, responsive layouts, image stability, and accessibility.
 - `scripts/verify-hooks.mjs` proves that the real pre-commit hook formats valid code and blocks invalid code.
 
 A future wishlist store belongs in `src/wishlist/wishlist-store.ts`; its visible UI belongs in
-`src/page/shop-page.ts`, and coordination between the two belongs in `src/app.ts`.
+`src/page/wishlist-view.ts`, and coordination between the two belongs in `src/app.ts`.
+
+## Module rules for future upgrades
+
+`main.ts` composes the application. `app.ts` translates user actions into store changes and page updates.
+Feature stores own their types and state; they never import browser views. Page modules receive
+actions and snapshots instead of creating or mutating stores themselves. `types.ts` contains
+the small coordination contracts shared by the app and page modules.
+
+Keep a view's markup and event handling together so a feature change has one clear home.
+Reuse layout and product markup through their existing modules. Browser-specific operations
+belong under `src/page/`, and pure formatting belongs in `src/shared/`.
+
+Run `npm run check` and `npm test` after changes; run `npm run verify:part1` and
+`npm run verify:ui` when changing routing, views, dialogs, or styles. The architecture check
+also inspects type-only imports for cycles, preventing hidden dependencies from spreading.
 
 ## Preview functionality
 

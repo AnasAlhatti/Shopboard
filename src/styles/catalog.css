@@ -1,0 +1,128 @@
+.products-page {
+  min-height: 60vh;
+  padding-block: 24px 48px;
+}
+.breadcrumb {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 28px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.products-page-header {
+  max-width: 680px;
+  margin-bottom: 28px;
+}
+.products-page-header h1 {
+  margin: 8px 0 10px;
+  color: var(--green);
+  font-size: 42px;
+  line-height: 1.05;
+}
+.products-page-header > p:not(.eyebrow, .products-count) {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.products-count {
+  margin-top: 12px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+.catalog-toolbar {
+  margin-bottom: 24px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #f8f5ef;
+}
+.category-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 4px;
+}
+.category-pill {
+  flex: 0 0 auto;
+  padding: 9px 13px;
+  border: 1px solid #dcd7ce;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 600;
+}
+.category-pill.is-active {
+  border-color: var(--green);
+  background: var(--green);
+  color: #fff;
+}
+.catalog-controls {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+.sort-group {
+  display: grid;
+  gap: 7px;
+}
+.sort-group label {
+  color: #182c24;
+  font-size: 11px;
+  font-weight: 600;
+}
+.sort-select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 38px 0 12px;
+  border: 1.5px solid #182c24;
+  border-radius: 4px;
+  background: #fff;
+  color: #182c24;
+  font: inherit;
+}
+.sort-select:focus-visible,
+.category-pill:focus-visible {
+  outline: 3px solid var(--rust);
+  outline-offset: 2px;
+}
+.catalog-search {
+  position: relative;
+  align-self: end;
+}
+.catalog-search .icon {
+  position: absolute;
+  top: 13px;
+  left: 13px;
+  width: 18px;
+  height: 18px;
+}
+.catalog-search input {
+  width: 100%;
+  min-height: 44px;
+  padding-left: 42px;
+  background: #fff;
+}
+.active-filters:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 11px;
+}
+.catalog-product-grid {
+  grid-template-columns: 1fr;
+}
+.catalog-product-grid .product-image {
+  aspect-ratio: 1.65;
+}
+.catalog-product-grid .product-details h2 {
+  font-size: 13px;
+  font-weight: 500;
+}

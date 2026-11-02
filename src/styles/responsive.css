@@ -1,0 +1,363 @@
+@media (min-width: 600px) {
+  .container {
+    width: min(1360px, calc(100% - 64px));
+  }
+  .announcement {
+    font-size: 11px;
+  }
+  .announcement-extra {
+    display: inline;
+  }
+  .header-inner {
+    gap: 24px;
+  }
+  .search-form {
+    order: 0;
+    width: auto;
+    flex: 1;
+  }
+  .main-nav {
+    justify-content: center;
+    gap: 36px;
+  }
+  .hero-art {
+    inset: 0 0 0 28%;
+    height: auto;
+  }
+  .hero-art::after {
+    background: linear-gradient(90deg, #f2ede4, transparent 55%);
+  }
+  .hero-inner {
+    padding-block: 47px;
+    min-height: 355px;
+  }
+  .hero h1 {
+    font-size: 62px;
+  }
+  .hero-subtitle {
+    font-size: 16px;
+  }
+  .hero-footnote {
+    font-size: 10px;
+  }
+  .category-grid {
+    gap: 16px;
+  }
+  .category-card {
+    height: 100px;
+  }
+  .category-name {
+    font-size: 27px;
+    padding-inline: 24px;
+  }
+  .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .product-details h3 {
+    font-size: 12px;
+  }
+  .benefits {
+    padding: 25px;
+    gap: 25px;
+  }
+  .benefit {
+    gap: 15px;
+  }
+  .benefit h3 {
+    font-size: 12px;
+  }
+  .benefit p {
+    font-size: 10px;
+  }
+  .benefit > .icon {
+    width: 33px;
+    height: 33px;
+  }
+  .newsletter .button .icon {
+    display: block;
+  }
+  .auth-main {
+    padding: 40px 32px;
+  }
+  .auth-panel {
+    padding: 40px;
+  }
+  .catalog-controls {
+    grid-template-columns: minmax(190px, 0.7fr) minmax(240px, 1.3fr);
+  }
+  .catalog-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 960px) {
+  .header-inner {
+    flex-wrap: nowrap;
+    padding-block: 20px;
+    gap: 30px;
+  }
+  .logo {
+    font-size: 38px;
+  }
+  .search-form {
+    max-width: 440px;
+    margin-right: auto;
+  }
+  .main-nav {
+    width: auto;
+    order: 0;
+    gap: 25px;
+    font-size: 11px;
+  }
+  .header-actions {
+    gap: 13px;
+    margin-left: 0;
+  }
+  .hero-inner {
+    min-height: 355px;
+    padding-block: 40px 34px;
+  }
+  .hero-art {
+    left: 39%;
+  }
+  .hero-art::after {
+    background: linear-gradient(90deg, #f2ede4, #f2ede400 35%);
+  }
+  .hero h1 {
+    font-size: 72px;
+  }
+  .hero-copy {
+    margin-left: 6%;
+  }
+  .hero .eyebrow {
+    margin-bottom: 14px;
+  }
+  .hero-subtitle {
+    font-size: 17px;
+    margin-top: 18px;
+  }
+  .hero .button {
+    margin-top: 25px;
+  }
+  .hero-footnote {
+    margin-top: 13px;
+  }
+  .category-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .category-name {
+    padding-inline: 21px;
+    font-size: 27px;
+  }
+  .shop-content {
+    padding-top: 24px;
+  }
+  .products {
+    padding-block: 27px 25px;
+  }
+  .section-heading {
+    margin-bottom: 17px;
+  }
+  .section-heading h2 {
+    font-size: 35px;
+  }
+  .section-heading .eyebrow {
+    font-size: 8px;
+  }
+  .product-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 17px;
+  }
+  .product-image {
+    aspect-ratio: 1.65;
+  }
+  .product-details {
+    padding: 11px 10px;
+  }
+  .product-details h3 {
+    font-size: 10px;
+  }
+  .price {
+    font-size: 11px;
+  }
+  .add-to-cart {
+    width: 30px;
+    height: 30px;
+  }
+  .benefits {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    padding: 22px 10px;
+    margin-bottom: 25px;
+  }
+  .benefit {
+    justify-content: center;
+    padding-inline: 14px;
+  }
+  .benefit + .benefit {
+    border-left: 1px solid #dcd7cc;
+  }
+  .benefit h3 {
+    font-size: 11px;
+  }
+  .benefit p {
+    font-size: 9px;
+  }
+  .newsletter-inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 45px;
+    padding-block: 27px;
+  }
+  .newsletter-inner > div {
+    margin-left: 6%;
+  }
+  .newsletter-form {
+    max-width: 500px;
+  }
+  .newsletter h2 {
+    font-size: 35px;
+  }
+  .newsletter h2 + p {
+    font-size: 12px;
+  }
+  .newsletter .button {
+    min-width: 140px;
+  }
+  .footer-inner {
+    padding-block: 23px;
+  }
+  .footer-logo {
+    font-size: 28px;
+  }
+  .site-footer nav {
+    gap: 26px;
+  }
+  .auth-main {
+    padding-block: 45px;
+    min-height: calc(100vh - 236px);
+    display: grid;
+    align-items: center;
+  }
+  .auth-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .auth-story {
+    display: block;
+    position: relative;
+    overflow: hidden;
+    background: #e9e4d9;
+  }
+  .auth-story-image {
+    position: absolute;
+    inset: 0;
+  }
+  .auth-story-image::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(#e9e4d9f5 10%, #e9e4d9d1 37%, #e9e4d900 75%);
+  }
+  .auth-story-copy {
+    position: relative;
+    z-index: 1;
+    padding: 52px 45px;
+  }
+  .auth-story h2 {
+    font-size: 60px;
+    line-height: 1;
+    letter-spacing: -1px;
+    color: var(--green);
+    margin-top: 18px;
+  }
+  .auth-story-copy > p:not(.eyebrow) {
+    max-width: 300px;
+    font-size: 12px;
+    color: #666c5e;
+    line-height: 1.9;
+    margin-top: 20px;
+  }
+  .auth-story-signature {
+    display: block;
+    font-size: 10px;
+    margin-top: 25px;
+    color: #73766a;
+  }
+  .auth-story-signature span {
+    display: block;
+    font: 28px var(--serif);
+    color: var(--green);
+    margin-top: 5px;
+  }
+  .auth-panel {
+    padding: 38px 45px;
+  }
+  .auth-panel h1 {
+    font-size: 45px;
+  }
+  .products-page {
+    padding-block: 38px 70px;
+  }
+  .products-page-header h1 {
+    font-size: 60px;
+  }
+  .catalog-toolbar {
+    padding: 22px;
+  }
+  .catalog-product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+  }
+}
+@media (min-width: 1280px) {
+  .header-inner {
+    gap: 37px;
+  }
+  .main-nav {
+    font-size: 12px;
+    gap: 30px;
+  }
+  .product-details h3 {
+    font-size: 12px;
+  }
+  .product-details {
+    padding: 12px;
+  }
+  .price {
+    font-size: 12px;
+  }
+  .add-to-cart {
+    width: 34px;
+    height: 34px;
+  }
+  .category-card {
+    height: 105px;
+  }
+  .hero-inner {
+    min-height: 375px;
+    padding-top: 45px;
+  }
+  .hero h1 {
+    font-size: 79px;
+  }
+  .hero-subtitle {
+    font-size: 19px;
+  }
+  .benefit h3 {
+    font-size: 12px;
+  }
+  .benefit p {
+    font-size: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none;
+    scroll-behavior: auto;
+  }
+}

@@ -1,5 +1,33 @@
-import type { CatalogFilter, CatalogState, CatalogStore, SortBy, SortOrder } from '../types.ts';
 import type { Category, Product } from '../data/catalog-data.ts';
+export type SortBy = 'default' | 'price' | 'name';
+export type SortOrder = 'asc' | 'desc';
+
+export interface CatalogState {
+  category: string;
+  query: string;
+  sortBy: SortBy;
+  sortOrder: SortOrder;
+  minPrice: number | null;
+  maxPrice: number | null;
+}
+
+export interface CatalogFilter {
+  category?: string;
+  query?: string;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+}
+
+export interface CatalogStore {
+  readonly products: readonly Product[];
+  readonly categories: readonly Category[];
+  getState(): CatalogState;
+  getResults(): Product[];
+  search(term: string): Product[];
+  filter(criteria?: CatalogFilter): Product[];
+  sort(by: SortBy, order?: SortOrder): Product[];
+  reset(): Product[];
+}
 
 export function createCatalogStore(
   products: readonly Product[],

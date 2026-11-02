@@ -1,0 +1,148 @@
+dialog {
+  width: min(560px, calc(100% - 30px));
+  max-height: calc(100dvh - 40px);
+  padding: 25px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--ink);
+  background: #fcfaf7;
+}
+dialog::backdrop {
+  background: #11261bb3;
+  backdrop-filter: blur(3px);
+}
+.dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.dialog-heading h2 {
+  font-size: 30px;
+}
+.dialog-heading h2 span {
+  font-size: 22px;
+  color: var(--muted);
+}
+.dialog-heading .eyebrow {
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.cart-items {
+  margin-top: 20px;
+}
+.cart-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-top: 1px solid var(--border);
+  padding-block: 18px;
+}
+.cart-image {
+  width: 100px;
+  aspect-ratio: 1.5;
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.cart-item-info {
+  flex-grow: 1;
+}
+.cart-item h3 {
+  font-size: 12px;
+  font-weight: 500;
+}
+.cart-item p {
+  font-size: 12px;
+  margin-top: 6px;
+}
+.quantity-controls {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.quantity-controls button {
+  width: 32px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+}
+.quantity-controls span {
+  min-width: 25px;
+  text-align: center;
+  font-size: 12px;
+}
+.remove-item .icon {
+  width: 17px;
+  height: 17px;
+}
+.cart-total {
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+}
+.cart-note {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 14px 0 22px;
+  line-height: 1.7;
+}
+.clear-cart {
+  display: block;
+  margin: 14px 0 0 auto;
+}
+.continue-shopping {
+  width: 100%;
+}
+.empty-bag {
+  padding: 45px 0;
+  text-align: center;
+}
+.empty-bag > .icon {
+  width: 36px;
+  height: 36px;
+}
+.empty-bag h3 {
+  font: 28px var(--serif);
+  margin: 17px 0 10px;
+}
+.empty-bag p,
+.info-copy {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+.info-copy {
+  margin-top: 18px;
+}
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 25px;
+  z-index: 100;
+  width: max-content;
+  max-width: calc(100% - 30px);
+  transform: translate(-50%, 15px);
+  padding: 14px 22px;
+  background: var(--green);
+  color: #fffdf5;
+  border-radius: 5px;
+  box-shadow: 0 8px 30px #0002;
+  font-size: 12px;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s,
+    transform 0.2s,
+    visibility 0.2s;
+}
+.toast.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}

@@ -1,0 +1,111 @@
+:root {
+  font-family: 'DM Sans', sans-serif;
+  color: #202923;
+  background: #fcfaf7;
+  font-synthesis: none;
+  --green: #203f33;
+  --ink: #182c24;
+  --rust: #ae5131;
+  --muted: #63685e;
+  --border: #e5e0d7;
+  --serif: 'Libre Caslon Display', Georgia, serif;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+button,
+input {
+  font: inherit;
+}
+button,
+a,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+a {
+  touch-action: manipulation;
+}
+button {
+  cursor: pointer;
+  color: inherit;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button,
+input {
+  min-width: 0;
+}
+input {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--ink);
+  background: #fffefa;
+  padding: 14px 16px;
+}
+input::placeholder {
+  color: #6b7065;
+}
+input:user-invalid {
+  border-color: #ad432f;
+}
+:focus-visible {
+  outline: 2px solid var(--rust);
+  outline-offset: 4px;
+}
+input:focus-visible {
+  outline-offset: 1px;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+h1,
+h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+}
+svg {
+  flex-shrink: 0;
+}
+.icon {
+  width: 23px;
+  height: 23px;
+  vertical-align: middle;
+}
+.container {
+  width: min(1360px, calc(100% - 36px));
+  margin-inline: auto;
+}
+.visually-hidden,
+.skip-link:not(:focus) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.skip-link:focus {
+  position: fixed;
+  inset: 12px auto auto 12px;
+  z-index: 100;
+  padding: 12px 20px;
+  background: white;
+}
