@@ -19,8 +19,18 @@ export function icon(name: string): string {
   return `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
 }
 
-export function photo(x: number, y: number, width: number, height: number, isLcp = false): string {
-  return `<span class="photo" aria-hidden="true" style="--photo-width:${(1672 / width) * 100}%;--photo-height:${(941 / height) * 100}%;--photo-left:${(-x / width) * 100}%;--photo-top:${(-y / height) * 100}%"><img src="/shopboard-homepage-concept.webp" alt="" width="1672" height="941"${isLcp ? ' fetchpriority="high"' : ''} decoding="async" draggable="false"/></span>`;
+export function photo(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  isLcp = false,
+  preserveAspectRatio = false,
+): string {
+  const ratioStyle = preserveAspectRatio
+    ? `--photo-width-inline:${(1672 / width) * 100};--photo-width-block:${(1672 / height) * 100};--photo-left-inline:${(-x / width) * 100};--photo-left-block:${(-x / height) * 100};--photo-top-inline:${(-y / width) * 100};--photo-top-block:${(-y / height) * 100};`
+    : `--photo-width:${(1672 / width) * 100}%;--photo-height:${(941 / height) * 100}%;--photo-left:${(-x / width) * 100}%;--photo-top:${(-y / height) * 100}%`;
+  return `<span class="photo${preserveAspectRatio ? ' photo-preserve-aspect' : ''}" aria-hidden="true" style="${ratioStyle}"><img src="/shopboard-homepage-concept.webp" alt="" width="1672" height="941"${isLcp ? ' fetchpriority="high"' : ''} decoding="async" draggable="false"/></span>`;
 }
 
 export function money(value: number): string {

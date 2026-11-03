@@ -1,5 +1,5 @@
-import type { Cart } from '../modules/cart/cart.types.ts';
-import type { Category, Product } from '../modules/products/products.types.ts';
+﻿import type { Cart } from '../modules/cart/cart.ts';
+import type { Category, Product } from '../modules/products/catalog.ts';
 import type { ShopActions, ShopModel, ShopPage } from '../app.types.ts';
 import { createAuthView } from '../modules/auth/auth.ui.ts';
 import { createCartDialog } from '../modules/cart/cart.ui.ts';
@@ -9,6 +9,7 @@ import { createToast } from '../shared/ui/toast.ts';
 import { required, dismissOnBackdrop } from '../shared/dom.ts';
 import { createInfoDialog } from '../shared/ui/info-dialog.ts';
 import { createShopChrome } from './layout.ts';
+import { parseRoute } from './routes.ts';
 
 interface PageDependencies {
   products: readonly Product[];
@@ -60,27 +61,28 @@ export function createShopPage({ products, categories }: PageDependencies): Shop
   function render(model: ShopModel): void {
     currentModel = model;
     const views = getConnection();
-    const hash = location.hash.slice(1);
-    const auth = hash === 'login' || hash === 'signup';
-    const categoryId = hash.startsWith('category/') ? (hash.split('/')[1] ?? '') : '';
-    const catalogRoute = hash === 'products' || categories.some((item) => item.id === categoryId);
+    const route = parseRoute(location.hash);
+    const auth = route.type === 'auth';
+    const catalogRoute =
+      route.type === 'products' ||
+      (route.type === 'category' && categories.some((item) => item.id === route.categoryId));
     views.cart.close();
     info.close();
     document.title = auth
-      ? `${hash === 'signup' ? 'Create an account' : 'Welcome back'} — ShopBoard`
+      ? `${route.type === 'auth' && route.mode === 'signup' ? 'Create an account' : 'Welcome back'} â€” ShopBoard`
       : catalogRoute
-        ? 'Products — ShopBoard'
-        : 'ShopBoard — Goods for a better everyday';
-    if (auth) views.auth.render(hash);
+        ? 'Products â€” ShopBoard'
+        : 'ShopBoard â€” Goods for a better everyday';
+    if (route.type === 'auth') views.auth.render(route.mode);
     else if (catalogRoute) views.catalog.render(model);
     else views.home.render(model);
-    if (hash === 'main-content') required<HTMLElement>(app, '#main-content').focus();
+    if (location.hash === '#main-content') required<HTMLElement>(app, '#main-content').focus();
     else window.scrollTo({ left: 0, top: 0 });
   }
 
   function updateCatalog(model: ShopModel): void {
     currentModel = model;
-    if (location.hash === '#login' || location.hash === '#signup') {
+    if (parseRoute(location.hash).type === 'auth') {
       location.hash = 'products';
       return;
     }
@@ -102,7 +104,7 @@ export function createShopPage({ products, categories }: PageDependencies): Shop
       const views = getConnection();
       dismissOnBackdrop(cartElement);
       dismissOnBackdrop(infoElement);
-      const route = () => views.actions.navigate(location.hash.slice(1));
+      const route = () => views.actions.navigate(location.hash);
       window.addEventListener('hashchange', route);
       route();
     },

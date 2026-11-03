@@ -1,4 +1,4 @@
-import type { Cart } from './modules/cart/cart.types.ts';
+import type { Cart } from './modules/cart/cart.ts';
 import type {
   CatalogFilter,
   CatalogState,
@@ -6,7 +6,7 @@ import type {
   SortOrder,
   Category,
   Product,
-} from './modules/products/products.types.ts';
+} from './modules/products/catalog.ts';
 
 export interface ShopModel {
   readonly products: readonly Product[];

@@ -1,162 +1,100 @@
-# ShopBoard
+﻿# ShopBoard
 
-A vanilla TypeScript and Vite storefront built with semantic HTML, mobile-first CSS,
-Flexbox, and Grid.
-The storefront, login, and signup views each render one `h1`. Every input has an
-associated label. Signup uses native required, email, and minimum-length validation,
-plus the browser's constraint-validation API for password confirmation.
+ShopBoard is a vanilla TypeScript and Vite storefront with a responsive home page, searchable and filterable product catalog, shopping cart, and login/signup screens. Its visual system follows the handmade marketplace direction in [marketnest-DESIGN.md](marketnest-DESIGN.md).
 
-## Development
-
-Use a recent Node.js release supported by the installed development tools, then run:
+## Start the app
 
 ```sh
 npm install
 npm run dev
 ```
 
-`npm install` runs `prepare` to install Husky's Git hooks. Run it from a Git checkout
-with development dependencies installed.
+## Project checks
 
-## Quality checks
+| Command                | Purpose                                                                                 |
+| ---------------------- | --------------------------------------------------------------------------------------- |
+| `npm run check`        | Check formatting, strict TypeScript, lint, architecture rules, and production build.    |
+| `npm test`             | Run catalog, cart, route, and app coordination unit checks without requiring a browser. |
+| `npm run test:startup` | Run the page startup check with Playwright's installed Chromium browser.                |
+| `npm run verify:ui`    | Check page behavior, responsive layouts, forms, and accessibility.                      |
+| `npm run verify:part1` | Run the storefront behavior acceptance checks.                                          |
+| `npm run verify:hooks` | Check that the commit hook formats valid changes and rejects invalid TypeScript.        |
 
-| Command                       | Purpose                                                                            |
-| ----------------------------- | ---------------------------------------------------------------------------------- |
-| `npm run format`              | Apply Prettier formatting                                                          |
-| `npm run format:check`        | Check formatting without editing files                                             |
-| `npm run lint`                | Run ESLint; errors or warnings fail the check                                      |
-| `npm run lint:fix`            | Apply available ESLint fixes                                                       |
-| `npm run typecheck`           | Run strict TypeScript checks without emitting files                                |
-| `npm run check`               | Check formatting, types, lint, architecture, and the production build              |
-| `npm run test`                | Run the catalog, cart, and app coordination tests                                  |
-| `npm run verify:architecture` | Enforce feature ownership, dependency direction, and no circular imports           |
-| `npm run verify:part1`        | Run the complete Part 1 browser acceptance checks                                  |
-| `npm run verify:hooks`        | Verify real successful and rejected commits in an isolated test repository         |
-| `npm run verify:ui`           | Build, check responsive layouts and forms, and run Lighthouse accessibility audits |
+Husky runs lint-staged on commit; lint-staged formats staged files with Prettier and checks staged TypeScript with ESLint.
 
-On each normal commit, Husky runs lint-staged against staged files:
+## Code map
 
-- Prettier fixes formatting and stages the corrected content.
-- ESLint checks JavaScript and TypeScript files with zero warnings allowed.
-- An ESLint error rejects the commit. Unstaged work is preserved by lint-staged.
+Each code file is listed below with its responsibility in one sentence.
 
-`verify:hooks` deliberately stages badly formatted TypeScript, commits it through the
-real Husky hook, and checks that the committed content is formatted. It then stages
-an explicit `any` and verifies that the next commit fails without changing HEAD.
-It never stages or commits the main working tree.
+### Application and page code
 
-## Browser verification
+| File                      | Responsibility                                                                                     |
+| ------------------------- | -------------------------------------------------------------------------------------------------- |
+| `index.html`              | Defines the document metadata, app mount point, dialogs, toast region, and TypeScript entry point. |
+| `src/main.ts`             | Creates the catalog and cart stores, connects the page adapter, and starts the app.                |
+| `src/app.ts`              | Connects navigation, catalog actions, cart change events, and page updates.                        |
+| `src/app.types.ts`        | Defines the contracts shared by app coordination and page rendering.                               |
+| `src/page/shop-page.ts`   | Builds the page adapter that renders routes, connects UI actions, and synchronizes updates.        |
+| `src/page/routes.ts`      | Parses hash routes into typed home, catalog, category, authentication, or unknown route values.    |
+| `src/page/layout.ts`      | Renders shared navigation and footer markup and connects the shared cart and search controls.      |
+| `src/page/console-api.ts` | Exposes the typed `window.shop` interface for inspecting and controlling catalog state.            |
 
-`npm run verify:ui` uses headless Chromium through Playwright. It prefers `CHROME_PATH`,
-then an installed Windows Edge or Chrome, then Playwright's Chromium. On another
-machine, install Chromium with `npx playwright install chromium` if needed.
+### Feature modules
 
-The checks cover home, login, and signup at 360, 768, and 1280 pixels:
+| File                                  | Responsibility                                                                                                                          |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/modules/products/catalog.ts`     | Defines product and catalog types, local records, and catalog search, filtering, sorting, and reset behavior.                           |
+| `src/modules/products/products.ui.ts` | Renders the home and catalog views and binds their product, search, sorting, and filter controls.                                       |
+| `src/modules/cart/cart.ts`            | Defines cart types and actions, calculates cart totals, persists changes through its adapter, and announces item additions and updates. |
+| `src/modules/cart/cart.storage.ts`    | Reads and validates persisted cart data through a storage adapter.                                                                      |
+| `src/modules/cart/cart.ui.ts`         | Renders the shopping cart dialog and binds its quantity, removal, and clear controls.                                                   |
+| `src/modules/auth/auth.ui.ts`         | Renders login and signup forms, preserves the account story image proportions, and handles client-side validation and feedback.         |
 
-- Exactly one `h1`, labels for every input, and no horizontal overflow or clipped controls.
-- Native signup validation, matching passwords, and password visibility.
-- Search, empty search results, category filtering, cart totals, and dialog dismissal.
-- Lighthouse accessibility scores of at least 90 for each page on mobile and desktop.
+### Shared code and styles
 
-Screenshots, HTML/JSON Lighthouse reports, and hook-test evidence are saved under
-`output/quality/`, which is ignored by Git.
+| File                           | Responsibility                                                                                     |
+| ------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `src/shared/dom.ts`            | Provides typed DOM lookup helpers used by page and feature views.                                  |
+| `src/shared/presentation.ts`   | Provides inline icons, standard and aspect-preserving sprite image crops, and currency formatting. |
+| `src/shared/ui/toast.ts`       | Displays temporary status messages in the shared toast region.                                     |
+| `src/shared/ui/info-dialog.ts` | Renders and controls the shared informational dialog.                                              |
+| `src/style.css`                | Imports the base, storefront, catalog, footer, auth, dialog, and responsive styles.                |
+| `src/styles/base.css`          | Defines design tokens, global element styles, focus states, and common layout utilities.           |
+| `src/styles/storefront.css`    | Styles shared navigation, the home page, product cards, and collection content.                    |
+| `src/styles/catalog.css`       | Styles the catalog title, filters, product grid, and pagination.                                   |
+| `src/styles/responsive.css`    | Applies the mobile-first layout changes at wider breakpoints and reduced-motion preferences.       |
+| `src/styles/footer.css`        | Styles the benefits section, newsletter, and site footer.                                          |
+| `src/styles/auth.css`          | Styles authentication layouts, fields, tabs, and validation feedback.                              |
+| `src/styles/dialogs.css`       | Styles the cart and informational dialogs, backdrops, and toast presentation.                      |
 
-## File map
+### Verification code
 
-### Application files
+| File                              | Responsibility                                                                              |
+| --------------------------------- | ------------------------------------------------------------------------------------------- |
+| `tests/catalog.test.mjs`          | Checks catalog query, filter, sorting, and reset behavior.                                  |
+| `tests/cart.test.mjs`             | Checks cart arithmetic, item changes, storage validation, and persistence.                  |
+| `tests/routes.test.mjs`           | Checks shared parsing for home, catalog, category, authentication, and unknown routes.      |
+| `tests/app.test.mjs`              | Checks coordination between app actions, stores, and page updates.                          |
+| `tests/page-startup.test.mjs`     | Checks that the app starts and reports unexpected page errors.                              |
+| `scripts/verify-ui.mjs`           | Checks the storefront’s routes, interactions, responsive layouts, forms, and accessibility. |
+| `scripts/verify-part1.mjs`        | Checks the storefront’s required end-to-end behaviors.                                      |
+| `scripts/verify-hooks.mjs`        | Checks formatting and lint enforcement through the configured commit hook.                  |
+| `scripts/verify-architecture.mjs` | Enforces feature ownership, dependency direction, and import-cycle rules.                   |
 
-```text
-src/
-├── main.ts
-├── app.ts
-├── app.types.ts
-├── modules/
-│   ├── products/
-│   │   ├── products.types.ts
-│   │   ├── products.data.ts
-│   │   ├── products.logic.ts
-│   │   └── products.ui.ts
-│   ├── cart/
-│   │   ├── cart.types.ts
-│   │   ├── cart.logic.ts
-│   │   ├── cart.storage.ts
-│   │   └── cart.ui.ts
-│   └── auth/
-│       └── auth.ui.ts
-├── shared/
-│   ├── dom.ts
-│   ├── presentation.ts
-│   └── ui/
-│       ├── toast.ts
-│       └── info-dialog.ts
-├── page/
-│   ├── shop-page.ts
-│   ├── layout.ts
-│   └── console-api.ts
-├── styles/
-└── style.css
-```
+### Configuration code
 
-- `main.ts` creates stores, storage and views, then starts the application.
-- `app.ts` coordinates feature actions; `app.types.ts` contains only its app/page contracts.
-- Products own `Product`, categories, catalog state, local data, search/filter/sort logic,
-  and the home/catalog UI including product cards.
-- Cart owns `CartItem`, `Cart`, quantity and total calculations, storage validation,
-  and the shopping bag dialog.
-- Auth owns the existing login/signup forms and validation.
-- Shared code supplies DOM helpers, formatting, toasts, and informational dialogs.
-- The page shell owns routing, shared layout, and the `window.shop` console bridge.
-- `style.css` imports the ordered style modules in `styles/`.
+| File                | Responsibility                                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `package.json`      | Declares project commands, dependencies, staged-file hook behavior, and a separate optional browser startup check. |
+| `tsconfig.json`     | Enables strict TypeScript checking for application source without emitting build files.                            |
+| `eslint.config.js`  | Configures JavaScript and TypeScript lint rules, including restrictions on unsafe typing.                          |
+| `.prettierrc.json`  | Configures the project’s shared formatting conventions.                                                            |
+| `.husky/pre-commit` | Runs lint-staged before each commit to format and lint staged code.                                                |
 
-### Test files
+## Assets
 
-- `tests/catalog.test.mjs` verifies catalog searching, filtering, sorting, combined operations, and reset behavior.
-- `tests/cart.test.mjs` verifies cart arithmetic, item removal, clearing, invalid storage, and refresh persistence.
-- `tests/app.test.mjs` verifies coordination among the app, stores, and page adapter.
+The site uses `public/shopboard-homepage-concept.webp` as its compressed product and category image sprite and `public/favicon.svg` as its browser icon; unused duplicate and starter images are excluded.
 
-### Verification files
+## Current limits
 
-- `scripts/verify-part1.mjs` runs the complete Part 1 behavior checklist in a real browser.
-- `scripts/verify-architecture.mjs` enforces TypeScript sources, feature-owned UI, independent shared code, dependency direction, and no circular imports.
-- `scripts/verify-ui.mjs` checks routes, forms, responsive layouts, image stability, and accessibility.
-- `scripts/verify-hooks.mjs` proves that the real pre-commit hook formats valid code and blocks invalid code.
-
-## Module rules for future upgrades
-
-Each feature owns its types, logic, data and UI under `src/modules/<feature>/`.
-Feature UI receives the actions and view models it needs; it never creates or imports
-stores directly. Feature logic and types do not depend on UI. Cross-feature behavior
-is coordinated by `app.ts`; direct cross-feature imports are limited to type contracts.
-
-Shared code does not import features or the application shell. The page shell assembles
-the feature views and handles routing and common layout. Browser persistence belongs
-in a feature's `.storage.ts` file. Other DOM work belongs in `.ui.ts` files, the page shell,
-or shared UI/helpers. `app.types.ts` holds coordination contracts, never feature types.
-
-For a wishlist, add `modules/wishlist/wishlist.types.ts`, `wishlist.logic.ts`, and
-`wishlist.ui.ts`; connect it through `app.ts` and the page shell.
-
-### Planned API integration
-
-Products still come from `products.data.ts`. No HTTP requests, asynchronous loading
-states, or API placeholders have been introduced by the architecture refactor.
-
-When implementing the REST API, add these files with their actual implementation:
-
-- `shared/api/client.ts`: `fetchJson<T>`, `ApiError`, HTTP handling, and a decoder accepting `unknown`.
-- `modules/products/products.api.ts`: endpoint calls and external response validation/types.
-- `modules/products/products.mapper.ts`: validated API response to internal `Product` conversion.
-
-Then extend the products-owned state and UI with loading, error, empty, and success
-states. Keep server field names in the API layer; product views and cart logic continue
-using the internal `Product` contract.
-
-Run `npm run check` and `npm test` after changes; use `npm run verify:part1` and
-`npm run verify:ui` for view, routing, dialog, or style changes.
-
-## Preview functionality
-
-The shopping bag is saved in this browser. Authentication, payments, and newsletter
-delivery are not connected to a backend; the forms state this and never save or send
-account credentials. The supplied design concept provides the local photographic
-sprite; the interface itself is HTML and CSS.
+The catalog uses local sample data; authentication, payments, and newsletter delivery do not connect to a backend.

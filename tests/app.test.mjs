@@ -1,12 +1,18 @@
 import assert from 'node:assert/strict';
 import { createApp } from '../src/app.ts';
 
-const calls = { add: 0, syncCart: 0, render: 0, installed: 0, connected: 0 };
+const calls = { add: 0, syncCart: 0, render: 0, renderCart: 0, installed: 0, connected: 0 };
 const cartSnapshot = { items: [{ id: 'mug', quantity: 1 }], count: 1, subtotal: 18 };
+let onCartChange;
 const cart = {
   getSnapshot: () => ({ items: [], count: 0, subtotal: 0 }),
+  onChange: (listener) => {
+    onCartChange = listener;
+    return () => {};
+  },
   add: () => {
     calls.add += 1;
+    onCartChange({ snapshot: cartSnapshot, addedProduct: results[0] });
     return cartSnapshot;
   },
   change: () => cartSnapshot,
@@ -55,8 +61,12 @@ const page = {
     calls.syncCart += 1;
     assert.deepEqual(snapshot, cartSnapshot);
   },
-  renderCart: () => {},
-  showToast: () => {},
+  renderCart: () => {
+    calls.renderCart += 1;
+  },
+  showToast: (message) => {
+    calls.toastMessage = message;
+  },
 };
 
 const app = createApp({ catalog, cart, page });
@@ -70,6 +80,8 @@ assert.equal(catalog.getState().category, '');
 actions.addToCart('mug');
 assert.equal(calls.add, 1);
 assert.equal(calls.syncCart, 1);
+assert.equal(calls.renderCart, 1);
+assert.equal(calls.toastMessage, 'Stoneware Mug added to your bag');
 
 const beforeSearch = calls.render;
 actions.search('MUG');

@@ -1,4 +1,4 @@
-import assert from 'node:assert/strict';
+﻿import assert from 'node:assert/strict';
 import { access, mkdir, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import path from 'node:path';
@@ -37,8 +37,9 @@ for (const candidate of candidates) {
     // Try the next installed Chromium browser.
   }
 }
-const server = await preview({ preview: { host: '127.0.0.1', port: 4175, strictPort: true } });
-const base = 'http://127.0.0.1:4175/';
+const port = Number(process.env.SHOPBOARD_UI_PORT ?? 4175);
+const server = await preview({ preview: { host: '127.0.0.1', port, strictPort: true } });
+const base = `http://127.0.0.1:${port}/`;
 let browser;
 const results = [];
 try {
@@ -65,6 +66,16 @@ try {
         }),
         `${route} at ${width}: all photographic assets are decoded and available`,
       );
+      if ((route === 'login' || route === 'signup') && width >= 960) {
+        const imageRatio = await page.locator('.auth-story-image').evaluate((frame) => {
+          const { width, height } = frame.getBoundingClientRect();
+          return width / height;
+        });
+        assert.ok(
+          Math.abs(imageRatio - 842 / 271) < 0.01,
+          `${route}: account image frame matches the selected crop without zooming`,
+        );
+      }
       assert.equal(await page.locator('h1').count(), 1, `${route}: exactly one h1`);
       const layout = await page.evaluate(() => ({
         width: innerWidth,
@@ -94,6 +105,7 @@ try {
     .locator('.product-card', { hasText: 'Notebook Journal' })
     .locator('.photo')
     .elementHandle();
+  await page.getByRole('button', { name: 'Open product search' }).click({ timeout: 1500 });
   await page.getByLabel('Search products').fill('journal');
   assert.equal(
     await journalPhoto.evaluate((element) => element.isConnected),
@@ -101,16 +113,13 @@ try {
     'Searching must preserve existing product images instead of replacing them',
   );
   await page.getByLabel('Search products').fill('');
-  await page
-    .getByRole('navigation', { name: 'Main navigation' })
-    .getByRole('link', { name: 'Workspace' })
-    .click();
+  await page.locator('.category-card[data-category="workspace"]').click();
   await page.waitForURL('**/#category/workspace');
   await page.locator('#products-page-title').waitFor();
   assert.equal(await page.locator('.product-card').count(), 1);
   await page
     .getByRole('navigation', { name: 'Main navigation' })
-    .getByRole('link', { name: 'Home', exact: true })
+    .locator('a[href="#home"]')
     .click();
   await page.waitForURL('**/#home');
   await page.locator('.shop-content').waitFor();
@@ -191,6 +200,7 @@ try {
   await page.getByRole('button', { name: 'Increase Stoneware Mug quantity' }).click();
   assert.match(await page.locator('.cart-total').innerText(), /36\.00/);
   await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Open product search' }).click({ timeout: 1500 });
   await page.getByLabel('Search products').fill('journal');
   assert.equal(await page.locator('.product-card:not([hidden])').count(), 1);
   await page.getByLabel('Search products').fill('no-such-product');
@@ -199,10 +209,7 @@ try {
   await page.waitForFunction(
     () => document.querySelectorAll('.product-card:not([hidden])').length === 6,
   );
-  await page
-    .getByRole('navigation', { name: 'Main navigation' })
-    .getByRole('link', { name: 'Workspace' })
-    .click();
+  await page.locator('.category-card[data-category="workspace"]').click();
   await page.waitForFunction(
     () => document.querySelectorAll('.product-card:not([hidden])').length === 1,
   );

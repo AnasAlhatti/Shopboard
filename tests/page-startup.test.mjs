@@ -7,7 +7,6 @@ const base = `http://127.0.0.1:${port}/`;
 await build({ logLevel: 'silent' });
 const server = await preview({ preview: { host: '127.0.0.1', port, strictPort: true } });
 const browser = await chromium.launch({
-  executablePath: 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
   headless: true,
 });
 
@@ -22,8 +21,8 @@ try {
     await route.fulfill({ response, body: html });
   });
 
-  const startupError = page.waitForEvent('pageerror', { timeout: 2_000 });
-  await page.goto(`${base}#home`);
+  const startupError = page.waitForEvent('pageerror', { timeout: 10_000 });
+  await page.goto(`${base}#home`, { waitUntil: 'commit' });
   assert.match((await startupError).message, /Required element not found: #toast/);
   console.log('PASS page startup rejects missing required toast markup');
 } finally {

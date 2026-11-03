@@ -9,7 +9,7 @@ const sharedRoot = path.join(sourceRoot, 'shared') + path.sep;
 const modulesRoot = path.join(sourceRoot, 'modules') + path.sep;
 const isFeatureUi = (file) => file.startsWith(modulesRoot) && file.endsWith('.ui.ts');
 const isUi = (file) =>
-  file.startsWith(pageRoot) ||
+  (file.startsWith(pageRoot) && file !== path.join(pageRoot, 'routes.ts')) ||
   isFeatureUi(file) ||
   file.startsWith(path.join(sharedRoot, 'ui') + path.sep) ||
   file === path.join(sharedRoot, 'dom.ts');
@@ -46,6 +46,31 @@ const knownFiles = new Set(files);
 const imports = new Map();
 const violations = [];
 const relative = (file) => path.relative(process.cwd(), file);
+const requiredFiles = [
+  'products/catalog.ts',
+  'products/products.ui.ts',
+  'cart/cart.ts',
+  'cart/cart.storage.ts',
+  'cart/cart.ui.ts',
+];
+const removedFiles = [
+  'products/products.types.ts',
+  'products/products.data.ts',
+  'products/products.logic.ts',
+  'cart/cart.types.ts',
+  'cart/cart.logic.ts',
+];
+
+for (const file of requiredFiles) {
+  if (!knownFiles.has(path.join(modulesRoot, file))) {
+    violations.push(`src/modules/${file}: required feature module file is missing`);
+  }
+}
+for (const file of removedFiles) {
+  if (knownFiles.has(path.join(modulesRoot, file))) {
+    violations.push(`src/modules/${file}: obsolete split module file must be removed`);
+  }
+}
 
 for (const file of files) {
   if (file.endsWith('.js'))
@@ -93,7 +118,12 @@ for (const file of files) {
       owner &&
       dependencyOwner &&
       owner !== dependencyOwner &&
-      !(typeOnly && target.endsWith('.types.ts'))
+      !(
+        typeOnly &&
+        (target.endsWith('.types.ts') ||
+          target === path.join(modulesRoot, 'products', 'catalog.ts') ||
+          target === path.join(modulesRoot, 'cart', 'cart.ts'))
+      )
     ) {
       violations.push(
         `${relative(file)}: cross-feature coordination belongs in app.ts; only type contracts may be shared directly`,

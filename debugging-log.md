@@ -1,8 +1,17 @@
 ## Bug 1
 
-- **Images in the website take too long to load on each refresh**
-- **Type: Client-side browser extension conflict / performance issue**
-- **How I found it: just testing the site if everything working fine after ai made the new UI**
-- **Cause: an extension in my browser called "HaramBlur" this extension uses AI to block any images that contain haram in them, which it was trying to do on my project causing images to load slowly so this is only a cliend side error not really a bug but I had no other bugs (:**
-- **Fix: Turn off haramblur on my project site**
-- **I initially thought it was caused by code so I told Ai about it and told it to fix it, it failed it decreased all images sizes and nothing happened so I tried testing more by myself which I found the website working perfectly normal on another browser so I tried resetting the first one didnt work I asked Ai again and told it what I found it started trying things and in its thought process it mentioned searching about haramblur and I immediatly realized its the problem.**
+- **What I saw:** Catalog product photos looked too large and appeared stretched.
+- **Type:** logic
+- **How I found it:** Visual inspection of the catalog page after comparing it with the design reference.
+- **Cause:** `src/styles/catalog.css:156` forced landscape product crops into square frames, distorting their proportions and using too much vertical space.
+- **Fix:** Set the catalog image frame to a 1.65:1 aspect ratio in the base catalog style and its responsive overrides.
+- **Did I use AI? For what?** Yes; I used AI to trace the visual issue to the catalog image aspect-ratio rules and update them.
+
+## Bug 2
+
+- **What I saw:** The account page's story image looked stretched, and its appearance changed when switching between login and signup.
+- **Type:** logic
+- **How I found it:** Compared the account image at desktop width in both modes and added a browser check for its rendered aspect ratio.
+- **Cause:** `src/shared/presentation.ts:22` set the sprite image width and height independently from its crop dimensions. The signup form made the grid row taller, which changed the image frame and exposed the distortion.
+- **Fix:** Matched the account image frame to a wide, uniformly scaled sprite crop so the signup panel does not enlarge or distort the artwork; added a regression check for both account modes.
+- **Did I use AI? For what?** Yes; I used AI to trace the image sizing issue, implement the fix, and add a regression check.

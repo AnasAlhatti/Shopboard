@@ -1,6 +1,12 @@
 import { icon, money, photo } from '../../shared/presentation.ts';
-import type { CartItem, Cart, CartActions } from './cart.types.ts';
+import type { CartItem, Cart } from './cart.ts';
 import { required } from '../../shared/dom.ts';
+
+interface CartActions {
+  changeCart(id: string, delta: number): void;
+  removeFromCart(id: string): void;
+  clearCart(): void;
+}
 
 export function createCartDialog(cartDialog: HTMLDialogElement, actions: CartActions) {
   function renderCart(snapshot: Cart): void {

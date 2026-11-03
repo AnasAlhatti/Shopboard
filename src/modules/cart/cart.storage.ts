@@ -1,5 +1,9 @@
-import type { Product } from '../products/products.types.ts';
-import type { StorageAdapter } from './cart.types.ts';
+import type { Product } from '../products/catalog.ts';
+
+export interface StorageAdapter {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+}
 
 const STORAGE_KEY = 'shopboard-cart';
 

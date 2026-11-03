@@ -1,7 +1,7 @@
-import type { CartStore } from './modules/cart/cart.types.ts';
-import type { CatalogStore } from './modules/products/products.types.ts';
-import type { Product } from './modules/products/products.types.ts';
+import type { CartStore } from './modules/cart/cart.ts';
+import type { CatalogStore, Product } from './modules/products/catalog.ts';
 import type { ConsoleApi, ShopActions, ShopModel, ShopPage } from './app.types.ts';
+import { parseRoute } from './page/routes.ts';
 
 interface AppDependencies {
   catalog: CatalogStore;
@@ -24,44 +24,32 @@ export function createApp({ catalog, cart, page }: AppDependencies) {
     return results;
   }
 
+  cart.onChange(({ snapshot, addedProduct }) => {
+    page.syncCart(snapshot);
+    page.renderCart(snapshot);
+    if (addedProduct) page.showToast(`${addedProduct.name} added to your bag`);
+  });
+
   const actions = Object.freeze<ShopActions>({
     navigate(route) {
-      const category = route.startsWith('category/') ? (route.split('/')[1] ?? '') : '';
-      if (category && catalog.categories.some((item) => item.id === category))
-        catalog.filter({ category });
-      else if (route === 'products') catalog.filter({ category: '' });
-      else if (route === 'home') catalog.reset();
+      const parsed = parseRoute(route);
+      if (
+        parsed.type === 'category' &&
+        catalog.categories.some((item) => item.id === parsed.categoryId)
+      )
+        catalog.filter({ category: parsed.categoryId });
+      else if (parsed.type === 'products') catalog.filter({ category: '' });
+      else if (parsed.type === 'home') catalog.reset();
       page.render(model());
     },
     search: (term) => updateCatalog(() => catalog.search(term)),
     filter: (criteria) => updateCatalog(() => catalog.filter(criteria)),
     sort: (by, order) => updateCatalog(() => catalog.sort(by, order)),
     reset: () => updateCatalog(() => catalog.reset()),
-    addToCart(id) {
-      const snapshot = cart.add(id);
-      page.syncCart(snapshot);
-      const product = catalog.products.find((item) => item.id === id);
-      if (product) page.showToast(`${product.name} added to your bag`);
-      return snapshot;
-    },
-    changeCart(id, delta) {
-      const snapshot = cart.change(id, delta);
-      page.syncCart(snapshot);
-      page.renderCart(snapshot);
-      return snapshot;
-    },
-    removeFromCart(id) {
-      const snapshot = cart.remove(id);
-      page.syncCart(snapshot);
-      page.renderCart(snapshot);
-      return snapshot;
-    },
-    clearCart() {
-      const snapshot = cart.clear();
-      page.syncCart(snapshot);
-      page.renderCart(snapshot);
-      return snapshot;
-    },
+    addToCart: cart.add,
+    changeCart: cart.change,
+    removeFromCart: cart.remove,
+    clearCart: cart.clear,
   });
 
   const consoleApi = Object.freeze<ConsoleApi>({

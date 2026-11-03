@@ -1,4 +1,4 @@
-.announcement {
+﻿.announcement {
   min-height: 32px;
   padding: 7px 15px;
   display: flex;
@@ -19,20 +19,23 @@
   display: none;
 }
 .site-header {
-  background: #fcfaf7;
+  background: var(--cream);
   border-bottom: 1px solid var(--border);
+}
+.announcement {
+  display: none;
 }
 .header-inner {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 18px;
-  padding-block: 18px 14px;
+  gap: 12px;
+  padding-block: 12px;
 }
 .logo {
-  color: var(--green);
+  color: #574334;
   font-family: var(--serif);
-  font-size: 34px;
+  font-size: 28px;
   letter-spacing: -1.6px;
   line-height: 1;
   white-space: nowrap;
@@ -84,12 +87,13 @@
 }
 .main-nav a[aria-current],
 .main-nav a:hover {
-  border-color: var(--green);
+  border-color: var(--rust);
+  color: var(--rust);
 }
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
   margin-left: auto;
 }
 .icon-button {
@@ -148,6 +152,15 @@
   max-width: none;
   left: var(--photo-left);
   top: var(--photo-top);
+}
+.photo-preserve-aspect {
+  container-type: size;
+}
+.photo-preserve-aspect img {
+  width: max(calc(var(--photo-width-inline) * 1cqw), calc(var(--photo-width-block) * 1cqh));
+  height: auto;
+  left: min(calc(var(--photo-left-inline) * 1cqw), calc(var(--photo-left-block) * 1cqh));
+  top: min(calc(var(--photo-top-inline) * 1cqw), calc(var(--photo-top-block) * 1cqh));
 }
 [hidden] {
   display: none;
@@ -318,33 +331,38 @@
 .product-card {
   overflow: hidden;
   border: 1px solid #e8e4dc;
-  border-radius: 5px;
-  background: #fdfbf8;
-  transition: box-shadow 0.2s;
+  border-radius: 8px;
+  background: #fff;
+  transition: border-color 0.18s ease-out;
 }
 .product-card:hover {
-  box-shadow: 0 6px 20px #23382b0c;
+  border-color: #d6d3d1;
 }
 .product-image {
   position: relative;
   aspect-ratio: 1.52;
   overflow: hidden;
-  background: #efebe4;
+  background: #f5f5f4;
+}
+.product-image img {
+  outline: 1px solid oklch(0 0 0 / 0.1);
+  outline-offset: -1px;
 }
 .product-details {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  padding: 12px 10px;
+  padding: 14px 12px;
 }
 .product-details h3 {
   font-weight: 450;
-  font-size: 11px;
+  font: 500 15px/1.45 var(--serif);
   line-height: 1.5;
 }
 .price {
-  font-size: 12px;
+  font-size: 14px;
+  font-weight: 600;
   margin-top: 3px;
 }
 .add-to-cart {
@@ -354,17 +372,23 @@
   height: 34px;
   flex-shrink: 0;
   border: 0;
-  border-radius: 50%;
+  border-radius: 4px;
   color: #fffefa;
-  background: var(--green);
-  transition: background 0.2s;
+  background: var(--rust);
+  transition:
+    background-color 150ms ease-out,
+    transform 150ms ease-out;
 }
 .add-to-cart .icon {
   width: 16px;
   height: 16px;
 }
 .add-to-cart:hover {
-  background: var(--rust);
+  background: #9a3412;
+}
+.add-to-cart:active,
+.button:active {
+  transform: scale(0.96);
 }
 .filter-summary {
   margin: -3px 0 17px;
@@ -392,4 +416,85 @@
   font-size: 13px;
   color: var(--muted);
   margin-bottom: 20px;
+}
+
+.site-header {
+  background: #fffaf0;
+}
+.header-inner {
+  min-height: 62px;
+}
+.logo {
+  font-size: 27px;
+}
+.main-nav a[aria-current],
+.main-nav a:hover {
+  color: var(--rust);
+  border-color: transparent;
+}
+.header-actions .search-form {
+  order: 0;
+  width: 38px;
+  height: 38px;
+  padding-inline: 9px;
+  border: 0;
+  background: transparent;
+}
+.header-actions .search-toggle {
+  width: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0;
+}
+.header-actions .search-form input {
+  width: 0;
+  padding: 0;
+}
+.header-actions .search-form:focus-within {
+  width: min(200px, 40vw);
+  border: 1px solid var(--border);
+}
+.header-actions .search-form:focus-within input {
+  width: 100%;
+  padding: 8px 0;
+}
+.account-link {
+  white-space: nowrap;
+  font-size: 12px;
+}
+@media (min-width: 760px) {
+  .header-inner {
+    flex-wrap: nowrap;
+    gap: 18px;
+    padding-block: 9px;
+  }
+  .logo {
+    flex: 0 0 auto;
+    font-size: 28px;
+  }
+  .main-nav {
+    order: 0;
+    width: auto;
+    flex: 1;
+    justify-content: center;
+    gap: clamp(12px, 2.4vw, 30px);
+    font-size: 13px;
+  }
+  .header-actions {
+    flex: 0 0 auto;
+    gap: 10px;
+  }
+}
+@media (max-width: 759px) {
+  .header-inner {
+    row-gap: 4px;
+  }
+  .main-nav {
+    order: 4;
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
+  .header-actions {
+    gap: 5px;
+  }
 }

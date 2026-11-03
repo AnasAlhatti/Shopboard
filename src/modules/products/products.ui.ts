@@ -1,16 +1,29 @@
-import { icon, money, photo } from '../../shared/presentation.ts';
+﻿import { icon, money, photo } from '../../shared/presentation.ts';
 import { required } from '../../shared/dom.ts';
 import { header, footer, syncActiveNavigation } from '../../page/layout.ts';
 
 import type {
   Category,
   Product,
+  CatalogFilter,
   CatalogState,
   SortBy,
   SortOrder,
-  ProductsViewModel,
-  ProductsViewActions,
-} from './products.types.ts';
+} from './catalog.ts';
+
+interface ProductsViewModel {
+  readonly catalog: CatalogState;
+  readonly results: readonly Product[];
+  readonly cart: { readonly count: number };
+}
+
+interface ProductsViewActions {
+  search(term: string): void;
+  filter(criteria?: CatalogFilter): void;
+  sort(by: SortBy, order?: SortOrder): void;
+  reset(): void;
+  addToCart(id: string): void;
+}
 
 function createHomeView({
   app,
@@ -22,10 +35,10 @@ function createHomeView({
 }: CollectionViewOptions) {
   const clearHome = () => clearHomeFilters(actions);
   function storefront(model: ProductsViewModel): void {
-    app.innerHTML = `${header(model.cart.count)}<main id="main-content" tabindex="-1">
+    app.innerHTML = `${header(model.cart.count, false, categories)}<main id="main-content" tabindex="-1">
     <section class="hero" aria-labelledby="hero-title"><div class="hero-art">${photo(665, 98, 1007, 271, true)}</div><div class="container hero-inner"><div class="hero-copy"><p class="eyebrow">THE EVERYDAY, WELL CHOSEN</p><h1 id="hero-title">Find something<br/>worth keeping.</h1><p class="hero-subtitle">Curated goods for everyday living.</p><a class="button button-primary" href="#products">Shop the collection ${icon('arrow')}</a><span class="hero-footnote">Made for your space. Chosen for your life.</span></div></div></section>
-    <div class="container shop-content"><nav class="category-grid" aria-label="Shop by category">${categories.map((category) => `<a href="#category/${category.id}" class="category-card" data-category="${category.id}">${photo(...category.image)}<span class="category-name">${category.name} <span aria-hidden="true">→</span></span></a>`).join('')}</nav>
-    <section id="products" class="products" aria-labelledby="products-title"><div class="section-heading"><div><p class="eyebrow">GOOD FINDS, JUST IN</p><h2 id="products-title">New arrivals</h2></div><button class="view-all text-button" type="button">View all ${icon('arrow')}</button></div><div class="filter-summary" hidden><span id="results-description" role="status"></span><button class="text-button clear-filters" type="button">Clear filters ×</button></div><div class="product-grid"></div></section>
+    <div class="container shop-content"><nav class="category-grid" aria-label="Shop by category">${categories.map((category) => `<a href="#category/${category.id}" class="category-card" data-category="${category.id}">${photo(...category.image)}<span class="category-name">${category.name}</span></a>`).join('')}</nav>
+    <section id="products" class="products" aria-labelledby="products-title"><div class="section-heading"><div><p class="eyebrow">GOOD FINDS, JUST IN</p><h2 id="products-title">New arrivals</h2></div><button class="view-all text-button" type="button">View all ${icon('arrow')}</button></div><div class="filter-summary" hidden><span id="results-description" role="status"></span><button class="text-button clear-filters" type="button">Clear filters Ã—</button></div><div class="product-grid"></div></section>
     <section class="benefits" aria-label="The ShopBoard approach">${[
       ['truck', 'Made for everyday', 'Useful things. Lasting favorites.'],
       ['leaf', 'Thoughtfully selected', 'A considered collection'],
@@ -80,7 +93,7 @@ function createHomeView({
     required<HTMLElement>(app, '.filter-summary').hidden =
       !model.catalog.category && !model.catalog.query;
     required<HTMLElement>(app, '#results-description').textContent =
-      `${model.results.length} ${model.results.length === 1 ? 'find' : 'finds'}${model.catalog.query ? ` for “${model.catalog.query}”` : ''}`;
+      `${model.results.length} ${model.results.length === 1 ? 'find' : 'finds'}${model.catalog.query ? ` for â€œ${model.catalog.query}â€` : ''}`;
     syncActiveNavigation(model.catalog.category);
   }
   return { render: storefront, update: renderHomeProducts };
@@ -96,17 +109,26 @@ function createCatalogView({
 }: CollectionViewOptions) {
   function productsPage(model: ProductsViewModel): void {
     const counts = categoryCounts(products, categories);
-    app.innerHTML = `${header(model.cart.count)}<main id="main-content" class="products-page" tabindex="-1"><div class="container">
-    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="#home">Home</a><span aria-hidden="true">/</span><span>Products</span></nav>
-    <header class="products-page-header"><p class="eyebrow">THE FULL COLLECTION</p><h1 id="products-page-title">Shop the Collection</h1><p>Useful, lasting goods chosen for everyday life.</p><p id="products-count" class="products-count" role="status"></p></header>
-    <section class="catalog-toolbar" aria-label="Product filters"><div class="category-pills" aria-label="Filter by category"><a class="category-pill" data-catalog-category="" href="#products">All (${counts.all})</a>${categories.map((category) => `<a class="category-pill" data-catalog-category="${category.id}" href="#category/${category.id}">${category.name} (${counts[category.id]})</a>`).join('')}</div>
-    <div class="catalog-controls"><div class="sort-group"><label for="product-sort">Sort by</label><select id="product-sort" class="sort-select"><option value="default">Featured / Default</option><option value="price-asc">Price: Low to High</option><option value="price-desc">Price: High to Low</option><option value="name-asc">Name: A to Z</option><option value="name-desc">Name: Z to A</option></select></div><div class="catalog-search"><label class="visually-hidden" for="product-search">Search products</label>${icon('search')}<input id="product-search" type="search" placeholder="Search the collection…" autocomplete="off"/></div></div>
-    <div class="active-filters" hidden><span class="active-filter-copy"></span><button class="text-button clear-catalog-filters" type="button">Clear filters ×</button></div></section>
-    <section aria-labelledby="products-page-title"><div class="product-grid catalog-product-grid"></div></section></div></main>${footer()}`;
+    app.innerHTML = `${header(model.cart.count, false, categories)}<main id="main-content" class="products-page" tabindex="-1">
+    <header class="catalog-title"><div class="container"><h1 id="products-page-title">Handmade goods</h1><span class="title-ornament" aria-hidden="true"></span></div></header>
+    <div class="container catalog-layout"><aside class="filter-panel" aria-label="Product filters">
+    <div class="filter-section"><h2>Categories</h2><div class="category-options"><a class="filter-category" data-catalog-category="" href="#products">All goods <span>${counts.all}</span></a>${categories.map((category) => `<a class="filter-category" data-catalog-category="${category.id}" href="#category/${category.id}">${category.name}<span>${counts[category.id]}</span></a>`).join('')}</div></div>
+    <fieldset class="filter-section price-filter"><legend>Price Range</legend><div class="price-inputs"><label><span class="visually-hidden">Minimum price</span><input id="price-min" type="number" min="0" placeholder="Min" value="${model.catalog.minPrice ?? ''}" /></label><label><span class="visually-hidden">Maximum price</span><input id="price-max" type="number" min="0" placeholder="Max" value="${model.catalog.maxPrice ?? ''}" /></label></div><label class="sort-group" for="product-sort"><span>Sort by</span><select id="product-sort" class="sort-select"><option value="default">Featured</option><option value="price-asc">Price: Low to High</option><option value="price-desc">Price: High to Low</option><option value="name-asc">Name: A to Z</option><option value="name-desc">Name: Z to A</option></select></label></fieldset>
+    <div class="filter-section catalog-search-section"><label for="product-search">Search</label><div class="catalog-search">${icon('search')}<input id="product-search" type="search" placeholder="Search goods" autocomplete="off"/></div></div>
+    <button class="button button-primary apply-filters" type="button">Apply filters</button><button class="text-button clear-catalog-filters" type="button">Clear all filters</button></aside>
+    <section class="catalog-results" aria-labelledby="products-page-title"><div class="catalog-results-heading"><p id="products-count" class="products-count" role="status"></p><span>Thoughtfully made, chosen to last.</span></div><div class="active-filters" hidden><span class="active-filter-copy"></span></div><div class="product-grid catalog-product-grid"></div><nav class="pagination" aria-label="Product pages"><span>Prev</span><a href="#products" aria-current="page">1</a><a href="#products">2</a><a href="#products">3</a><span>Next</span></nav></section></div></main>`;
     bindShopChrome();
     bindInfoLinks();
     const productSearch = required<HTMLInputElement>(app, '#product-search');
     productSearch.addEventListener('input', () => actions.search(productSearch.value));
+    required<HTMLButtonElement>(app, '.apply-filters').addEventListener('click', () => {
+      const minInput = required<HTMLInputElement>(app, '#price-min');
+      const maxInput = required<HTMLInputElement>(app, '#price-max');
+      actions.filter({
+        minPrice: minInput.value ? Number(minInput.value) : null,
+        maxPrice: maxInput.value ? Number(maxInput.value) : null,
+      });
+    });
     const productSort = required<HTMLSelectElement>(app, '#product-sort');
     productSort.addEventListener('change', () => {
       const [by = 'default', order = 'asc'] = productSort.value.split('-');
@@ -132,24 +154,25 @@ function createCatalogView({
     required<HTMLInputElement>(app, '#product-search').value = model.catalog.query;
     required<HTMLSelectElement>(app, '#product-sort').value = sortValue(model.catalog);
     required<HTMLElement>(app, '#products-count').textContent =
-      `Showing ${model.results.length} ${model.results.length === 1 ? 'find' : 'finds'}`;
+      `${model.results.length} ${model.results.length === 1 ? 'good find' : 'good finds'}`;
     const filters = [];
     if (model.catalog.category)
       filters.push(
         `Category: ${categories.find((item) => item.id === model.catalog.category)?.name}`,
       );
-    if (model.catalog.query) filters.push(`Search: “${model.catalog.query}”`);
+    if (model.catalog.query) filters.push(`Search: â€œ${model.catalog.query}â€`);
     if (model.catalog.minPrice !== null) filters.push(`From ${money(model.catalog.minPrice)}`);
     if (model.catalog.maxPrice !== null) filters.push(`Up to ${money(model.catalog.maxPrice)}`);
     const summary = required<HTMLElement>(app, '.active-filters');
     summary.hidden = filters.length === 0;
-    required<HTMLElement>(app, '.active-filter-copy').textContent = filters.join(' · ');
+    required<HTMLElement>(app, '.active-filter-copy').textContent = filters.join(' Â· ');
     app.querySelectorAll<HTMLElement>('[data-catalog-category]').forEach((link) => {
       const active = link.dataset.catalogCategory === model.catalog.category;
       link.classList.toggle('is-active', active);
       if (active) link.setAttribute('aria-current', 'true');
       else link.removeAttribute('aria-current');
     });
+    syncActiveNavigation(model.catalog.category);
   }
   return { render: productsPage, update: renderCatalogPage };
 }
@@ -182,7 +205,7 @@ function homeProductCard(product: Product): string {
 }
 
 function productCard(product: Product): string {
-  return `<article class="product-card" data-product-card="${product.id}"><div class="product-image" role="img" aria-label="${product.name}">${photo(...product.image)}</div><div class="product-details"><div><h2>${product.name}</h2><p class="price">${money(product.price)}</p></div><button class="add-to-cart" type="button" data-product="${product.id}" aria-label="Add ${product.name} to bag">${icon('cart')}</button></div></article>`;
+  return `<article class="product-card" data-product-card="${product.id}"><div class="product-image" role="img" aria-label="${product.name}">${photo(...product.image)}</div><div class="product-details"><div><h2>${product.name}</h2><p class="product-seller">By ${product.seller}</p><p class="price">${money(product.price)}</p></div><button class="add-to-cart" type="button" data-product="${product.id}" aria-label="Add to bag: ${product.name}">Add to bag</button></div></article>`;
 }
 
 interface CollectionViewOptions {
