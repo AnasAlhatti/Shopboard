@@ -69,10 +69,10 @@ export function createShopPage({ products, categories }: PageDependencies): Shop
     views.cart.close();
     info.close();
     document.title = auth
-      ? `${route.type === 'auth' && route.mode === 'signup' ? 'Create an account' : 'Welcome back'} â€” ShopBoard`
+      ? `${route.type === 'auth' && route.mode === 'signup' ? 'Create an account' : 'Welcome back'} — ShopBoard`
       : catalogRoute
-        ? 'Products â€” ShopBoard'
-        : 'ShopBoard â€” Goods for a better everyday';
+        ? 'Products — ShopBoard'
+        : 'ShopBoard — Goods for a better everyday';
     if (route.type === 'auth') views.auth.render(route.mode);
     else if (catalogRoute) views.catalog.render(model);
     else views.home.render(model);

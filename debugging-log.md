@@ -15,3 +15,12 @@
 - **Cause:** `src/shared/presentation.ts:22` set the sprite image width and height independently from its crop dimensions. The signup form made the grid row taller, which changed the image frame and exposed the distortion.
 - **Fix:** Matched the account image frame to a wide, uniformly scaled sprite crop so the signup panel does not enlarge or distort the artwork; added a regression check for both account modes.
 - **Did I use AI? For what?** Yes; I used AI to trace the image sizing issue, implement the fix, and add a regression check.
+
+## Bug 3
+
+- **What I saw:** The footer copyright, browser page title, and some arrows and search labels displayed stray characters such as `Â` and `â`.
+- **Type:** logic
+- **How I found it:** Searched the UI source for encoding artifacts and confirmed the browser title failed a new UI check.
+- **Cause:** `src/page/layout.ts` and `src/page/shop-page.ts` contained mojibake in user-facing strings, so the browser correctly rendered the corrupted characters that were stored in the source.
+- **Fix:** Replaced the corrupted characters with the intended ©, arrow, multiplication, middle-dot, quotation-mark, and em-dash characters, then added browser checks for page titles, footer copyright, and visible text.
+- **Did I use AI? For what?** Yes; I used AI to trace the malformed strings, correct them, and add a regression check.

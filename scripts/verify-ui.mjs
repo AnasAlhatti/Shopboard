@@ -57,6 +57,23 @@ try {
       await page.goto(`${base}#${route}`);
       await page.locator('h1').waitFor();
       await page.evaluate(() => document.fonts.ready);
+      const browserTitle = await page.title();
+      const visibleText = await page.locator('body').innerText();
+      const copyright = page.locator('.copyright');
+      assert.doesNotMatch(
+        browserTitle,
+        /[ÃÂâ]/,
+        `${route}: browser title has no encoding artifacts`,
+      );
+      if ((await copyright.count()) > 0) {
+        const footerText = (await copyright.textContent()) ?? '';
+        assert.match(
+          footerText,
+          /© \d{4} ShopBoard/,
+          `${route}: footer copyright displays correctly`,
+        );
+      }
+      assert.doesNotMatch(visibleText, /[ÃÂâ]/, `${route}: visible text has no encoding artifacts`);
       assert.ok(
         await page.locator('.photo img').evaluateAll(async (images) => {
           await Promise.all(images.map((image) => image.decode()));

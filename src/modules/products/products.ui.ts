@@ -38,7 +38,7 @@ function createHomeView({
     app.innerHTML = `${header(model.cart.count, false, categories)}<main id="main-content" tabindex="-1">
     <section class="hero" aria-labelledby="hero-title"><div class="hero-art">${photo(665, 98, 1007, 271, true)}</div><div class="container hero-inner"><div class="hero-copy"><p class="eyebrow">THE EVERYDAY, WELL CHOSEN</p><h1 id="hero-title">Find something<br/>worth keeping.</h1><p class="hero-subtitle">Curated goods for everyday living.</p><a class="button button-primary" href="#products">Shop the collection ${icon('arrow')}</a><span class="hero-footnote">Made for your space. Chosen for your life.</span></div></div></section>
     <div class="container shop-content"><nav class="category-grid" aria-label="Shop by category">${categories.map((category) => `<a href="#category/${category.id}" class="category-card" data-category="${category.id}">${photo(...category.image)}<span class="category-name">${category.name}</span></a>`).join('')}</nav>
-    <section id="products" class="products" aria-labelledby="products-title"><div class="section-heading"><div><p class="eyebrow">GOOD FINDS, JUST IN</p><h2 id="products-title">New arrivals</h2></div><button class="view-all text-button" type="button">View all ${icon('arrow')}</button></div><div class="filter-summary" hidden><span id="results-description" role="status"></span><button class="text-button clear-filters" type="button">Clear filters Ã—</button></div><div class="product-grid"></div></section>
+    <section id="products" class="products" aria-labelledby="products-title"><div class="section-heading"><div><p class="eyebrow">GOOD FINDS, JUST IN</p><h2 id="products-title">New arrivals</h2></div><button class="view-all text-button" type="button">View all ${icon('arrow')}</button></div><div class="filter-summary" hidden><span id="results-description" role="status"></span><button class="text-button clear-filters" type="button">Clear filters ×</button></div><div class="product-grid"></div></section>
     <section class="benefits" aria-label="The ShopBoard approach">${[
       ['truck', 'Made for everyday', 'Useful things. Lasting favorites.'],
       ['leaf', 'Thoughtfully selected', 'A considered collection'],
@@ -93,7 +93,7 @@ function createHomeView({
     required<HTMLElement>(app, '.filter-summary').hidden =
       !model.catalog.category && !model.catalog.query;
     required<HTMLElement>(app, '#results-description').textContent =
-      `${model.results.length} ${model.results.length === 1 ? 'find' : 'finds'}${model.catalog.query ? ` for â€œ${model.catalog.query}â€` : ''}`;
+      `${model.results.length} ${model.results.length === 1 ? 'find' : 'finds'}${model.catalog.query ? ` for “${model.catalog.query}”` : ''}`;
     syncActiveNavigation(model.catalog.category);
   }
   return { render: storefront, update: renderHomeProducts };
@@ -160,12 +160,12 @@ function createCatalogView({
       filters.push(
         `Category: ${categories.find((item) => item.id === model.catalog.category)?.name}`,
       );
-    if (model.catalog.query) filters.push(`Search: â€œ${model.catalog.query}â€`);
+    if (model.catalog.query) filters.push(`Search: “${model.catalog.query}”`);
     if (model.catalog.minPrice !== null) filters.push(`From ${money(model.catalog.minPrice)}`);
     if (model.catalog.maxPrice !== null) filters.push(`Up to ${money(model.catalog.maxPrice)}`);
     const summary = required<HTMLElement>(app, '.active-filters');
     summary.hidden = filters.length === 0;
-    required<HTMLElement>(app, '.active-filter-copy').textContent = filters.join(' Â· ');
+    required<HTMLElement>(app, '.active-filter-copy').textContent = filters.join(' · ');
     app.querySelectorAll<HTMLElement>('[data-catalog-category]').forEach((link) => {
       const active = link.dataset.catalogCategory === model.catalog.category;
       link.classList.toggle('is-active', active);
