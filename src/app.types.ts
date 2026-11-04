@@ -7,9 +7,11 @@ import type {
   Category,
   Product,
 } from './modules/products/catalog.ts';
+import type { LoadState } from './modules/products/products.types.ts';
 
 export interface ShopModel {
   readonly products: readonly Product[];
+  readonly loadState: LoadState;
   readonly categories: readonly Category[];
   readonly catalog: CatalogState;
   readonly results: readonly Product[];
@@ -17,6 +19,7 @@ export interface ShopModel {
 }
 
 export interface ShopActions {
+  retryProducts(): void;
   navigate(route: string): void;
   search(term: string): Product[];
   filter(criteria?: CatalogFilter): Product[];
@@ -42,6 +45,7 @@ export interface ShopPage {
   connect(actions: ShopActions): void;
   start(): void;
   render(model: ShopModel): void;
+  updateProducts(model: ShopModel): void;
   updateCatalog(model: ShopModel): void;
   renderCart(snapshot: Cart): void;
   syncCart(snapshot: Cart): void;

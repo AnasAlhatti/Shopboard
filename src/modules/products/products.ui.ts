@@ -10,14 +10,17 @@ import type {
   SortBy,
   SortOrder,
 } from './catalog.ts';
+import type { LoadState } from './products.types.ts';
 
 interface ProductsViewModel {
+  readonly loadState: LoadState;
   readonly catalog: CatalogState;
   readonly results: readonly Product[];
   readonly cart: { readonly count: number };
 }
 
 interface ProductsViewActions {
+  retryProducts(): void;
   search(term: string): void;
   filter(criteria?: CatalogFilter): void;
   sort(by: SortBy, order?: SortOrder): void;
@@ -27,7 +30,6 @@ interface ProductsViewActions {
 
 function createHomeView({
   app,
-  products,
   categories,
   actions,
   bindShopChrome,
@@ -73,27 +75,17 @@ function createHomeView({
   function renderHomeProducts(model: ProductsViewModel): void {
     const grid = app.querySelector('.shop-content .product-grid');
     if (!grid) return;
-    if (!grid.children.length) {
-      grid.innerHTML =
-        products.map(homeProductCard).join('') +
-        `<div class="empty-results" hidden>${icon('search')}<h3>No finds just yet.</h3><p>Try another search or explore the full collection.</p><button class="button button-green clear-empty" type="button">Explore all products</button></div>`;
-      bindAddButtons(grid, actions.addToCart);
-      required<HTMLButtonElement>(grid, '.clear-empty').addEventListener('click', clearHome);
-    }
-    const matchingIds = new Set(model.results.map((product) => product.id));
-    grid.querySelectorAll<HTMLElement>('[data-product-card]').forEach((card) => {
-      const id = card.dataset.productCard;
-      card.hidden = !id || !matchingIds.has(id);
-    });
-    required<HTMLElement>(grid, '.empty-results').hidden = model.results.length > 0;
+    grid.innerHTML = renderLoadState(model.loadState, model.results, homeProductCard);
+    bindAddButtons(grid, actions.addToCart);
+    grid.querySelector('.retry-products')?.addEventListener('click', actions.retryProducts);
+    grid.querySelector('.clear-empty')?.addEventListener('click', clearHome);
     required<HTMLInputElement>(app, '#global-product-search').value = model.catalog.query;
     required<HTMLElement>(app, '#products-title').textContent = model.catalog.category
       ? `${categories.find((category) => category.id === model.catalog.category)?.name ?? 'Category'} essentials`
       : 'New arrivals';
     required<HTMLElement>(app, '.filter-summary').hidden =
       !model.catalog.category && !model.catalog.query;
-    required<HTMLElement>(app, '#results-description').textContent =
-      `${model.results.length} ${model.results.length === 1 ? 'find' : 'finds'}${model.catalog.query ? ` for “${model.catalog.query}”` : ''}`;
+    required<HTMLElement>(app, '#results-description').textContent = resultsDescription(model);
     syncActiveNavigation(model.catalog.category);
   }
   return { render: storefront, update: renderHomeProducts };
@@ -101,18 +93,20 @@ function createHomeView({
 
 function createCatalogView({
   app,
-  products,
   categories,
   actions,
   bindShopChrome,
   bindInfoLinks,
 }: CollectionViewOptions) {
   function productsPage(model: ProductsViewModel): void {
-    const counts = categoryCounts(products, categories);
+    const counts =
+      model.loadState.status === 'success'
+        ? categoryCounts(model.loadState.products, categories)
+        : undefined;
     app.innerHTML = `${header(model.cart.count, false, categories)}<main id="main-content" class="products-page" tabindex="-1">
     <header class="catalog-title"><div class="container"><h1 id="products-page-title">Handmade goods</h1><span class="title-ornament" aria-hidden="true"></span></div></header>
     <div class="container catalog-layout"><aside class="filter-panel" aria-label="Product filters">
-    <div class="filter-section"><h2>Categories</h2><div class="category-options"><a class="filter-category" data-catalog-category="" href="#products">All goods <span>${counts.all}</span></a>${categories.map((category) => `<a class="filter-category" data-catalog-category="${category.id}" href="#category/${category.id}">${category.name}<span>${counts[category.id]}</span></a>`).join('')}</div></div>
+    <div class="filter-section"><h2>Categories</h2><div class="category-options"><a class="filter-category" data-catalog-category="" href="#products">All goods <span data-category-count="all">${counts?.all ?? '—'}</span></a>${categories.map((category) => `<a class="filter-category" data-catalog-category="${category.id}" href="#category/${category.id}">${category.name}<span data-category-count="${category.id}">${counts?.[category.id] ?? '—'}</span></a>`).join('')}</div></div>
     <fieldset class="filter-section price-filter"><legend>Price Range</legend><div class="price-inputs"><label><span class="visually-hidden">Minimum price</span><input id="price-min" type="number" min="0" placeholder="Min" value="${model.catalog.minPrice ?? ''}" /></label><label><span class="visually-hidden">Maximum price</span><input id="price-max" type="number" min="0" placeholder="Max" value="${model.catalog.maxPrice ?? ''}" /></label></div><label class="sort-group" for="product-sort"><span>Sort by</span><select id="product-sort" class="sort-select"><option value="default">Featured</option><option value="price-asc">Price: Low to High</option><option value="price-desc">Price: High to Low</option><option value="name-asc">Name: A to Z</option><option value="name-desc">Name: Z to A</option></select></label></fieldset>
     <div class="filter-section catalog-search-section"><label for="product-search">Search</label><div class="catalog-search">${icon('search')}<input id="product-search" type="search" placeholder="Search goods" autocomplete="off"/></div></div>
     <button class="button button-primary apply-filters" type="button">Apply filters</button><button class="text-button clear-catalog-filters" type="button">Clear all filters</button></aside>
@@ -144,17 +138,30 @@ function createCatalogView({
   function renderCatalogPage(model: ProductsViewModel): void {
     const grid = app.querySelector('.catalog-product-grid');
     if (!grid) return;
-    grid.innerHTML = model.results.length
-      ? model.results.map(productCard).join('')
-      : `<div class="empty-results">${icon('search')}<h2>No finds just yet.</h2><p>Try another search or explore the full collection.</p><button class="button button-green clear-empty" type="button">Explore all products</button></div>`;
+    grid.innerHTML = renderLoadState(model.loadState, model.results, productCard);
     bindAddButtons(grid, actions.addToCart);
+    grid.querySelector('.retry-products')?.addEventListener('click', actions.retryProducts);
     grid.querySelector('.clear-empty')?.addEventListener('click', () => {
       clearCatalogFilters(actions);
     });
     required<HTMLInputElement>(app, '#product-search').value = model.catalog.query;
     required<HTMLSelectElement>(app, '#product-sort').value = sortValue(model.catalog);
-    required<HTMLElement>(app, '#products-count').textContent =
-      `${model.results.length} ${model.results.length === 1 ? 'good find' : 'good finds'}`;
+    required<HTMLElement>(app, '#products-count').textContent = resultsDescription(model);
+    const counts =
+      model.loadState.status === 'success'
+        ? categoryCounts(model.loadState.products, categories)
+        : undefined;
+    app.querySelectorAll<HTMLElement>('[data-category-count]').forEach((count) => {
+      const category = count.dataset.categoryCount ?? 'all';
+      count.textContent = String(counts?.[category] ?? '—');
+    });
+    const pagination = app.querySelector<HTMLElement>('.pagination');
+    if (pagination) {
+      pagination.hidden =
+        model.loadState.status !== 'success' ||
+        model.loadState.products.length === 0 ||
+        model.results.length === 0;
+    }
     const filters = [];
     if (model.catalog.category)
       filters.push(
@@ -181,6 +188,49 @@ function sortValue(state: CatalogState): string {
   return state.sortBy === 'default' ? 'default' : `${state.sortBy}-${state.sortOrder}`;
 }
 
+function renderLoadState(
+  state: LoadState,
+  results: readonly Product[],
+  renderProduct: (product: Product) => string,
+): string {
+  switch (state.status) {
+    case 'loading':
+      return `<div class="product-load-panel product-loading" role="status"><p>Loading products…</p><div class="product-skeletons" aria-hidden="true">${[1, 2, 3].map(() => '<div class="product-skeleton"><span class="product-skeleton-image"></span><span class="product-skeleton-line"></span><span class="product-skeleton-line product-skeleton-line-short"></span></div>').join('')}</div></div>`;
+    case 'error':
+      return `<div class="product-load-panel product-load-error" role="alert"><h3>We couldn’t load the products</h3><p>${escapeHtml(state.message)}</p><button class="button button-primary retry-products" type="button">Try again</button></div>`;
+    case 'success':
+      if (state.products.length === 0) {
+        return `<div class="empty-results product-empty"><h3>No products just yet.</h3><p>There’s nothing in the collection right now. Please check back soon.</p></div>`;
+      }
+      if (results.length === 0) {
+        return `<div class="empty-results product-no-matches">${icon('search')}<h3>No matches this time.</h3><p>Try changing your search or filters to find something you like.</p><button class="button button-green clear-empty" type="button">Explore all products</button></div>`;
+      }
+      return results.map(renderProduct).join('');
+  }
+  return assertNever(state);
+}
+
+function resultsDescription(model: ProductsViewModel): string {
+  switch (model.loadState.status) {
+    case 'loading':
+      return 'Loading products…';
+    case 'error':
+      return 'Products could not be loaded.';
+    case 'success':
+      if (model.loadState.products.length === 0) return 'No products available.';
+      return `${model.results.length} ${model.results.length === 1 ? 'find' : 'finds'}${model.catalog.query ? ` for “${model.catalog.query}”` : ''}`;
+  }
+  return assertNever(model.loadState);
+}
+
+function escapeHtml(value: string): string {
+  return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+}
+
+function assertNever(value: never): never {
+  throw new Error(`Unhandled product load state: ${String(value)}`);
+}
+
 function categoryCounts(
   products: readonly Product[],
   categories: readonly Category[],
@@ -201,16 +251,39 @@ function isSortOrder(value: string): value is SortOrder {
 }
 
 function homeProductCard(product: Product): string {
-  return `<article class="product-card" data-product-card="${product.id}"><div class="product-image" role="img" aria-label="${product.name}">${photo(...product.image)}</div><div class="product-details"><div><h3>${product.name}</h3><p class="price">${money(product.price)}</p></div><button class="add-to-cart" type="button" data-product="${product.id}" aria-label="Add ${product.name} to bag">${icon('cart')}</button></div></article>`;
+  const name = escapeHtml(product.name);
+  const id = escapeHtml(product.id);
+  const addControl = product.inStock
+    ? `<button class="add-to-cart" type="button" data-product="${id}" aria-label="Add ${name} to bag">${icon('cart')}</button>`
+    : '<span class="product-stock-status">Out of stock</span>';
+  return `<article class="product-card" data-product-card="${id}">${productImageMarkup(product)}<div class="product-details"><div><h3>${name}</h3><p class="price">${money(product.price)}</p></div>${addControl}</div></article>`;
 }
 
 function productCard(product: Product): string {
-  return `<article class="product-card" data-product-card="${product.id}"><div class="product-image" role="img" aria-label="${product.name}">${photo(...product.image)}</div><div class="product-details"><div><h2>${product.name}</h2><p class="product-seller">By ${product.seller}</p><p class="price">${money(product.price)}</p></div><button class="add-to-cart" type="button" data-product="${product.id}" aria-label="Add to bag: ${product.name}">Add to bag</button></div></article>`;
+  const name = escapeHtml(product.name);
+  const id = escapeHtml(product.id);
+  const seller = product.seller
+    ? `<p class="product-seller">By ${escapeHtml(product.seller)}</p>`
+    : '';
+  const addControl = product.inStock
+    ? `<button class="add-to-cart" type="button" data-product="${id}" aria-label="Add to bag: ${name}">Add to bag</button>`
+    : '<span class="product-stock-status">Out of stock</span>';
+  return `<article class="product-card" data-product-card="${id}">${productImageMarkup(product)}<div class="product-details"><div><h2>${name}</h2>${seller}<p class="price">${money(product.price)}</p></div>${addControl}</div></article>`;
+}
+
+function productImageMarkup(product: Product): string {
+  const label = product.image
+    ? escapeHtml(product.name)
+    : `Image unavailable for ${escapeHtml(product.name)}`;
+  const image = product.image
+    ? photo(...product.image)
+    : '<svg class="product-placeholder-art" viewBox="0 0 240 150" aria-hidden="true" focusable="false"><circle class="placeholder-sun" cx="120" cy="68" r="51"/><path class="placeholder-sprig" d="M42 118c15-18 20-38 18-63m-1 22c-12-2-20-10-23-20 12 0 20 6 23 20Zm1-14c9-4 15-12 16-22-10 4-16 12-16 22Z"/><path class="placeholder-bag" d="M88 68h64l7 57H81l7-57Z"/><path class="placeholder-bag-fold" d="m88 68 32 15 32-15"/><path class="placeholder-handle" d="M103 70V55a17 17 0 0 1 34 0v15"/><path class="placeholder-sparkle" d="M183 45v16m-8-8h16"/></svg><span class="product-placeholder-label">Image not available</span>';
+  const placeholderClass = product.image ? '' : ' product-image-placeholder';
+  return `<div class="product-image${placeholderClass}" role="img" aria-label="${label}">${image}</div>`;
 }
 
 interface CollectionViewOptions {
   app: HTMLElement;
-  products: readonly Product[];
   categories: readonly Category[];
   actions: ProductsViewActions;
   bindShopChrome(): void;

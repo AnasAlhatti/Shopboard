@@ -3,12 +3,12 @@ import { readFile } from 'node:fs/promises';
 import { categories, createCatalogStore } from '../src/modules/products/catalog.ts';
 import { getProducts } from '../src/modules/products/products.api.ts';
 
-const productsJson = await readFile(new URL('../public/products.json', import.meta.url), 'utf8');
+const productsJson = await readFile(new URL('./fixtures/products.json', import.meta.url), 'utf8');
 globalThis.fetch = async () =>
   new Response(productsJson, { headers: { 'Content-Type': 'application/json' } });
 const products = await getProducts();
 
-const originalOrder = ['mug', 'planter', 'blanket', 'bottle', 'journal', 'tray'];
+const originalOrder = ['1', '2', '3', '4', '5', '6'];
 const catalog = createCatalogStore(products, categories);
 
 assert.equal(Object.isFrozen(products), true);
@@ -20,11 +20,11 @@ assert.deepEqual(
 
 assert.deepEqual(
   catalog.search('MUG').map((product) => product.id),
-  ['mug'],
+  ['1'],
 );
 assert.deepEqual(
   catalog.search('mug').map((product) => product.id),
-  ['mug'],
+  ['1'],
 );
 
 catalog.reset();
@@ -50,7 +50,7 @@ catalog.reset();
 catalog.filter({ category: 'lifestyle', query: 'e' });
 assert.deepEqual(
   catalog.sort('price', 'asc').map((product) => product.id),
-  ['bottle', 'blanket'],
+  ['4', '3'],
 );
 
 catalog.filter({ minPrice: 20, maxPrice: 34, category: '', query: '' });

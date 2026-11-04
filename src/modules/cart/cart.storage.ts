@@ -37,6 +37,7 @@ export function loadQuantities(
     const saved: unknown = JSON.parse(storage.getItem(STORAGE_KEY) || '{}');
     if (!isRecord(saved)) return quantities;
     for (const product of products) {
+      if (product.inStock === false) continue;
       const quantity = saved[product.id];
       if (
         typeof quantity === 'number' &&

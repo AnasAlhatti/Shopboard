@@ -1,5 +1,5 @@
 ﻿import type { Cart } from '../modules/cart/cart.ts';
-import type { Category, Product } from '../modules/products/catalog.ts';
+import type { Category } from '../modules/products/catalog.ts';
 import type { ShopActions, ShopModel, ShopPage } from '../app.types.ts';
 import { createAuthView } from '../modules/auth/auth.ui.ts';
 import { createCartDialog } from '../modules/cart/cart.ui.ts';
@@ -12,11 +12,10 @@ import { createShopChrome } from './layout.ts';
 import { parseRoute } from './routes.ts';
 
 interface PageDependencies {
-  products: readonly Product[];
   categories: readonly Category[];
 }
 
-export function createShopPage({ products, categories }: PageDependencies): ShopPage {
+export function createShopPage({ categories }: PageDependencies): ShopPage {
   const app = required<HTMLElement>(document, '#app');
   const cartElement = required<HTMLDialogElement>(document, '#cart-dialog');
   const infoElement = required<HTMLDialogElement>(document, '#info-dialog');
@@ -36,7 +35,6 @@ export function createShopPage({ products, categories }: PageDependencies): Shop
     const bindInfo = () => info.bind(app);
     const collection = {
       app,
-      products,
       categories,
       actions,
       bindShopChrome: chrome.bind,
@@ -91,6 +89,14 @@ export function createShopPage({ products, categories }: PageDependencies): Shop
     else if (app.querySelector('.shop-content')) views.home.update(model);
   }
 
+  function updateProducts(model: ShopModel): void {
+    currentModel = model;
+    if (parseRoute(location.hash).type === 'auth') return;
+    const views = getConnection();
+    if (app.querySelector('.catalog-product-grid')) views.catalog.update(model);
+    else if (app.querySelector('.shop-content')) views.home.update(model);
+  }
+
   function syncCart(snapshot: Cart): void {
     if (currentModel) currentModel = { ...currentModel, cart: snapshot };
     getConnection().chrome.sync(snapshot);
@@ -109,6 +115,7 @@ export function createShopPage({ products, categories }: PageDependencies): Shop
       route();
     },
     render,
+    updateProducts,
     updateCatalog,
     syncCart,
     renderCart: (snapshot: Cart) => getConnection().cart.render(snapshot),

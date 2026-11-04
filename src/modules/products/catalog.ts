@@ -5,8 +5,9 @@ export interface Product {
   readonly name: string;
   readonly price: number;
   readonly category: string;
-  readonly image: ImageCrop;
-  readonly seller: string;
+  readonly image: ImageCrop | null;
+  readonly seller: string | null;
+  readonly inStock: boolean;
 }
 
 export interface Category {
@@ -37,6 +38,7 @@ export interface CatalogFilter {
 export interface CatalogStore {
   readonly products: readonly Product[];
   readonly categories: readonly Category[];
+  setProducts(products: readonly Product[]): void;
   getState(): CatalogState;
   getResults(): Product[];
   search(term: string): Product[];
@@ -60,6 +62,7 @@ export function createCatalogStore(
   products: readonly Product[],
   categories: readonly Category[],
 ): CatalogStore {
+  let currentProducts = products;
   const state: CatalogState = {
     category: '',
     query: '',
@@ -71,7 +74,7 @@ export function createCatalogStore(
 
   function getResults(): Product[] {
     const query = state.query.trim().toLowerCase();
-    const results = products.filter((product) => {
+    const results = currentProducts.filter((product) => {
       if (state.category && product.category !== state.category) return false;
       if (query && !product.name.toLowerCase().includes(query)) return false;
       if (typeof state.minPrice === 'number' && product.price < state.minPrice) return false;
@@ -116,8 +119,13 @@ export function createCatalogStore(
   }
 
   return Object.freeze({
-    products,
+    get products() {
+      return currentProducts;
+    },
     categories,
+    setProducts: (nextProducts: readonly Product[]) => {
+      currentProducts = nextProducts;
+    },
     getState: () => ({ ...state }),
     getResults,
     search: (term: string) => filter({ query: term }),

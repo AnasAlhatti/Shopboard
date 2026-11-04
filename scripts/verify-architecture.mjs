@@ -48,13 +48,13 @@ const violations = [];
 const relative = (file) => path.relative(process.cwd(), file);
 const requiredFiles = [
   'products/catalog.ts',
+  'products/products.types.ts',
   'products/products.ui.ts',
   'cart/cart.ts',
   'cart/cart.storage.ts',
   'cart/cart.ui.ts',
 ];
 const removedFiles = [
-  'products/products.types.ts',
   'products/products.data.ts',
   'products/products.logic.ts',
   'cart/cart.types.ts',

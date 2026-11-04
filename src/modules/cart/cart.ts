@@ -15,6 +15,7 @@ export interface Cart {
 export interface CartStore {
   getSnapshot(): Cart;
   onChange(listener: (change: CartChange) => void): () => void;
+  setProducts(products: readonly Product[]): void;
   add(id: string): Cart;
   change(id: string, delta: number): Cart;
   remove(id: string): Cart;
@@ -29,7 +30,8 @@ export interface CartChange {
 const MAX_QUANTITY = 99;
 
 export function createCartStore(products: readonly Product[], storage: StorageAdapter): CartStore {
-  const quantities = loadQuantities(products, storage, MAX_QUANTITY);
+  let currentProducts = products;
+  const quantities = loadQuantities(currentProducts, storage, MAX_QUANTITY);
   const listeners = new Set<(change: CartChange) => void>();
 
   const save = () => saveQuantities(quantities, storage);
@@ -42,7 +44,8 @@ export function createCartStore(products: readonly Product[], storage: StorageAd
   }
 
   function change(id: string, delta: number, addedProduct?: Product): Cart {
-    if (!products.some((product) => product.id === id)) return snapshot();
+    const product = currentProducts.find((item) => item.id === id);
+    if (!product || (delta > 0 && product.inStock === false)) return snapshot();
     quantities[id] = Math.min(MAX_QUANTITY, (quantities[id] || 0) + delta);
     if (quantities[id] <= 0) delete quantities[id];
     save();
@@ -62,7 +65,7 @@ export function createCartStore(products: readonly Product[], storage: StorageAd
   }
 
   function snapshot(): Cart {
-    const items = products.flatMap((product) => {
+    const items = currentProducts.flatMap((product) => {
       const quantity = quantities[product.id];
       return quantity ? [{ ...product, quantity }] : [];
     });
@@ -75,6 +78,19 @@ export function createCartStore(products: readonly Product[], storage: StorageAd
 
   return Object.freeze({
     getSnapshot: snapshot,
+    setProducts(nextProducts: readonly Product[]) {
+      const restoredQuantities = loadQuantities(nextProducts, storage, MAX_QUANTITY);
+      const validIds = new Set(
+        nextProducts.filter((product) => product.inStock !== false).map((product) => product.id),
+      );
+      for (const id of Object.keys(quantities)) {
+        if (!validIds.has(id)) delete quantities[id];
+        else restoredQuantities[id] = quantities[id] ?? restoredQuantities[id] ?? 0;
+      }
+      for (const id of Object.keys(quantities)) delete quantities[id];
+      Object.assign(quantities, restoredQuantities);
+      currentProducts = nextProducts;
+    },
     onChange(listener: (change: CartChange) => void) {
       listeners.add(listener);
       return () => listeners.delete(listener);
@@ -83,7 +99,7 @@ export function createCartStore(products: readonly Product[], storage: StorageAd
       change(
         id,
         1,
-        products.find((product) => product.id === id),
+        currentProducts.find((product) => product.id === id),
       ),
     change,
     remove,

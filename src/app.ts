@@ -1,17 +1,24 @@
 import type { CartStore } from './modules/cart/cart.ts';
 import type { CatalogStore, Product } from './modules/products/catalog.ts';
+import { ApiError } from './shared/api/client.ts';
 import type { ConsoleApi, ShopActions, ShopModel, ShopPage } from './app.types.ts';
+import type { LoadState } from './modules/products/products.types.ts';
 import { parseRoute } from './page/routes.ts';
 
 interface AppDependencies {
   catalog: CatalogStore;
   cart: CartStore;
   page: ShopPage;
+  loadProducts(): Promise<readonly Product[]>;
 }
 
-export function createApp({ catalog, cart, page }: AppDependencies) {
+export function createApp({ catalog, cart, page, loadProducts }: AppDependencies) {
+  let loadState: LoadState = { status: 'loading' };
+  let productRequestId = 0;
+
   const model = (): ShopModel => ({
     products: catalog.products,
+    loadState,
     categories: catalog.categories,
     catalog: catalog.getState(),
     results: catalog.getResults(),
@@ -24,6 +31,32 @@ export function createApp({ catalog, cart, page }: AppDependencies) {
     return results;
   }
 
+  async function refreshProducts(): Promise<void> {
+    const requestId = ++productRequestId;
+    loadState = { status: 'loading' };
+    page.updateProducts(model());
+    let products: readonly Product[];
+    try {
+      products = await loadProducts();
+    } catch (error) {
+      if (requestId !== productRequestId) return;
+      loadState = {
+        status: 'error',
+        message: productLoadErrorMessage(error),
+      };
+      page.updateProducts(model());
+      return;
+    }
+    if (requestId !== productRequestId) return;
+    catalog.setProducts(products);
+    cart.setProducts(products);
+    loadState = { status: 'success', products };
+    const cartSnapshot = cart.getSnapshot();
+    page.syncCart(cartSnapshot);
+    page.renderCart(cartSnapshot);
+    page.updateProducts(model());
+  }
+
   cart.onChange(({ snapshot, addedProduct }) => {
     page.syncCart(snapshot);
     page.renderCart(snapshot);
@@ -31,6 +64,7 @@ export function createApp({ catalog, cart, page }: AppDependencies) {
   });
 
   const actions = Object.freeze<ShopActions>({
+    retryProducts: () => void refreshProducts(),
     navigate(route) {
       const parsed = parseRoute(route);
       if (
@@ -53,7 +87,9 @@ export function createApp({ catalog, cart, page }: AppDependencies) {
   });
 
   const consoleApi = Object.freeze<ConsoleApi>({
-    products: catalog.products,
+    get products() {
+      return catalog.products;
+    },
     categories: catalog.categories,
     search(term) {
       const results = actions.search(term);
@@ -84,6 +120,23 @@ export function createApp({ catalog, cart, page }: AppDependencies) {
       page.connect(actions);
       page.installConsoleApi(consoleApi);
       page.start();
+      void refreshProducts();
     },
   });
+}
+
+function productLoadErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    return `The product request failed with status ${error.status}.`;
+  }
+  if (error instanceof SyntaxError) {
+    return 'The product service returned unreadable data.';
+  }
+  if (
+    error instanceof TypeError &&
+    error.message === 'The products response has an invalid format.'
+  ) {
+    return 'The product service returned data in an unexpected format.';
+  }
+  return 'The product service could not be reached.';
 }

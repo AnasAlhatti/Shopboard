@@ -1,6 +1,6 @@
 ﻿# ShopBoard
 
-ShopBoard is a vanilla TypeScript and Vite storefront with a responsive home page, searchable and filterable product catalog, shopping cart, and login/signup screens. Its visual system follows the handmade marketplace direction in [marketnest-DESIGN.md](marketnest-DESIGN.md).
+ShopBoard is a vanilla TypeScript and Vite storefront with a responsive home page, searchable and filterable product catalog, shopping cart, and login/signup screens. Products load from `https://shopboard-api.vercel.app/api/products`. Its visual system follows the handmade marketplace direction in [marketnest-DESIGN.md](marketnest-DESIGN.md).
 
 ## Start the app
 
@@ -28,32 +28,35 @@ Each code file is listed below with its responsibility in one sentence.
 
 ### Application and page code
 
-| File                      | Responsibility                                                                                     |
-| ------------------------- | -------------------------------------------------------------------------------------------------- |
-| `index.html`              | Defines the document metadata, app mount point, dialogs, toast region, and TypeScript entry point. |
-| `src/main.ts`             | Creates the catalog and cart stores, connects the page adapter, and starts the app.                |
-| `src/app.ts`              | Connects navigation, catalog actions, cart change events, and page updates.                        |
-| `src/app.types.ts`        | Defines the contracts shared by app coordination and page rendering.                               |
-| `src/page/shop-page.ts`   | Builds the page adapter that renders routes, connects UI actions, and synchronizes updates.        |
-| `src/page/routes.ts`      | Parses hash routes into typed home, catalog, category, authentication, or unknown route values.    |
-| `src/page/layout.ts`      | Renders shared navigation and footer markup and connects the shared cart and search controls.      |
-| `src/page/console-api.ts` | Exposes the typed `window.shop` interface for inspecting and controlling catalog state.            |
+| File                      | Responsibility                                                                                              |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `index.html`              | Defines the document metadata, app mount point, dialogs, toast region, and TypeScript entry point.          |
+| `src/main.ts`             | Creates the app shell and starts product loading without blocking the rest of the storefront.               |
+| `src/app.ts`              | Coordinates product load states and retry with navigation, catalog actions, cart changes, and page updates. |
+| `src/app.types.ts`        | Defines the contracts shared by app coordination and page rendering.                                        |
+| `src/page/shop-page.ts`   | Builds the page adapter that renders routes, connects UI actions, and synchronizes updates.                 |
+| `src/page/routes.ts`      | Parses hash routes into typed home, catalog, category, authentication, or unknown route values.             |
+| `src/page/layout.ts`      | Renders shared navigation and footer markup and connects the shared cart and search controls.               |
+| `src/page/console-api.ts` | Exposes the typed `window.shop` interface for inspecting and controlling catalog state.                     |
 
 ### Feature modules
 
-| File                                  | Responsibility                                                                                                                          |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/modules/products/catalog.ts`     | Defines product and catalog types, local records, and catalog search, filtering, sorting, and reset behavior.                           |
-| `src/modules/products/products.ui.ts` | Renders the home and catalog views and binds their product, search, sorting, and filter controls.                                       |
-| `src/modules/cart/cart.ts`            | Defines cart types and actions, calculates cart totals, persists changes through its adapter, and announces item additions and updates. |
-| `src/modules/cart/cart.storage.ts`    | Reads and validates persisted cart data through a storage adapter.                                                                      |
-| `src/modules/cart/cart.ui.ts`         | Renders the shopping cart dialog and binds its quantity, removal, and clear controls.                                                   |
-| `src/modules/auth/auth.ui.ts`         | Renders login and signup forms, preserves the account story image proportions, and handles client-side validation and feedback.         |
+| File                                     | Responsibility                                                                                                                          |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/modules/products/catalog.ts`        | Defines product and catalog types, categories, and catalog search, filtering, sorting, and reset behavior.                              |
+| `src/modules/products/products.api.ts`   | Validates API product records, maps integer cents into the app's product model, and loads products from the ShopBoard API.              |
+| `src/modules/products/products.types.ts` | Defines the discriminated loading, error, and success states for product loading.                                                       |
+| `src/modules/products/products.ui.ts`    | Renders the home and catalog views and binds their product, search, sorting, and filter controls.                                       |
+| `src/modules/cart/cart.ts`               | Defines cart types and actions, calculates cart totals, persists changes through its adapter, and announces item additions and updates. |
+| `src/modules/cart/cart.storage.ts`       | Reads and validates persisted cart data through a storage adapter.                                                                      |
+| `src/modules/cart/cart.ui.ts`            | Renders the shopping cart dialog and binds its quantity, removal, and clear controls.                                                   |
+| `src/modules/auth/auth.ui.ts`            | Renders login and signup forms, preserves the account story image proportions, and handles client-side validation and feedback.         |
 
 ### Shared code and styles
 
 | File                           | Responsibility                                                                                     |
 | ------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `src/shared/api/client.ts`     | Fetches JSON from the same origin and reports unsuccessful HTTP responses with their status.       |
 | `src/shared/dom.ts`            | Provides typed DOM lookup helpers used by page and feature views.                                  |
 | `src/shared/presentation.ts`   | Provides inline icons, standard and aspect-preserving sprite image crops, and currency formatting. |
 | `src/shared/ui/toast.ts`       | Displays temporary status messages in the shared toast region.                                     |
@@ -97,4 +100,4 @@ The site uses `public/shopboard-homepage-concept.webp` as its compressed product
 
 ## Current limits
 
-The catalog uses local sample data; authentication, payments, and newsletter delivery do not connect to a backend.
+The catalog depends on the external ShopBoard API; authentication, payments, and newsletter delivery do not connect to a backend.

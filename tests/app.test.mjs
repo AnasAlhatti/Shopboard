@@ -6,6 +6,7 @@ const cartSnapshot = { items: [{ id: 'mug', quantity: 1 }], count: 1, subtotal: 
 let onCartChange;
 const cart = {
   getSnapshot: () => ({ items: [], count: 0, subtotal: 0 }),
+  setProducts: () => {},
   onChange: (listener) => {
     onCartChange = listener;
     return () => {};
@@ -24,6 +25,7 @@ const results = [{ id: 'mug', name: 'Stoneware Mug', price: 18 }];
 const catalog = {
   products: results,
   categories: [],
+  setProducts: () => {},
   getState: () => ({ ...state }),
   getResults: () => results,
   search: (term) => {
@@ -54,6 +56,7 @@ const page = {
   render: () => {
     calls.render += 1;
   },
+  updateProducts: () => {},
   updateCatalog: () => {
     calls.render += 1;
   },
@@ -69,7 +72,7 @@ const page = {
   },
 };
 
-const app = createApp({ catalog, cart, page });
+const app = createApp({ catalog, cart, page, loadProducts: () => new Promise(() => {}) });
 app.start();
 assert.equal(calls.connected, 1);
 assert.equal(calls.installed, 1);
