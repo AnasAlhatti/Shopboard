@@ -25,3 +25,4 @@ output/
 *.sw?
 .superpowers/
 .worktrees/
+docs/

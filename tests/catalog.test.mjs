@@ -1,5 +1,12 @@
 import assert from 'node:assert/strict';
-import { products, categories, createCatalogStore } from '../src/modules/products/catalog.ts';
+import { readFile } from 'node:fs/promises';
+import { categories, createCatalogStore } from '../src/modules/products/catalog.ts';
+import { getProducts } from '../src/modules/products/products.api.ts';
+
+const productsJson = await readFile(new URL('../public/products.json', import.meta.url), 'utf8');
+globalThis.fetch = async () =>
+  new Response(productsJson, { headers: { 'Content-Type': 'application/json' } });
+const products = await getProducts();
 
 const originalOrder = ['mug', 'planter', 'blanket', 'bottle', 'journal', 'tray'];
 const catalog = createCatalogStore(products, categories);

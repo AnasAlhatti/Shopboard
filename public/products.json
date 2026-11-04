@@ -1,0 +1,50 @@
+[
+  {
+    "id": "mug",
+    "name": "Stoneware Mug",
+    "price_cents": 1800,
+    "category": "home",
+    "seller": "Atelier Form",
+    "image": [126, 549, 221, 121]
+  },
+  {
+    "id": "planter",
+    "name": "Ceramic Planter",
+    "price_cents": 2400,
+    "category": "home",
+    "seller": "Clay & Co.",
+    "image": [368, 549, 220, 121]
+  },
+  {
+    "id": "blanket",
+    "name": "Linen Throw Blanket",
+    "price_cents": 5600,
+    "category": "lifestyle",
+    "seller": "Fieldwork Studio",
+    "image": [607, 549, 219, 121]
+  },
+  {
+    "id": "bottle",
+    "name": "Everyday Water Bottle",
+    "price_cents": 3200,
+    "category": "lifestyle",
+    "seller": "Good Things Workshop",
+    "image": [847, 549, 218, 121]
+  },
+  {
+    "id": "journal",
+    "name": "Notebook Journal",
+    "price_cents": 2000,
+    "category": "workspace",
+    "seller": "Paper Habit",
+    "image": [1086, 549, 217, 121]
+  },
+  {
+    "id": "tray",
+    "name": "Oak Catchall Tray",
+    "price_cents": 3400,
+    "category": "gifts",
+    "seller": "Oak & Grain",
+    "image": [1326, 549, 219, 121]
+  }
+]
